@@ -50,13 +50,13 @@ public class TestServer extends Thread{
 
   public void run(){
     System.out.println("TEST: Test Server receive Message to unlock door from webclient");
-    //Test Correct Passcode
+    //TEST: Correct Passcode
     try {
 			testPasscode(CORRECT_PASS, "Correct Passcode Test: ", 0, (byte)0xFF);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
-    //TEST incorect Passcode
+    //TEST: Incorrect Passcode
     try {
 			testPasscode(INCORRECT_PASS, "Incorect Passcode Test: ",1, (byte)0);
 		} catch (IOException e) {
@@ -77,11 +77,11 @@ public class TestServer extends Thread{
     return new DatagramPacket(sendMsg, sendMsg.length, LOCAL_HOST, SERVER_PORT);
   }
 
-  private void testPasscode(String pass, String out, int i, byte expected) throws IOException {
+  private void testPasscode(String pass, String out, int i, byte expected) throws IOException, SocketException{
   	byte[] rcvMsg = new byte[100];
     DatagramPacket receivePacket = new DatagramPacket(rcvMsg, rcvMsg.length);
   	DatagramPacket testPacket = bulidStandardRequest(PASS_MSG, pass);
-		//doorSocket.setSoTimeout(10000);
+		doorSocket.setSoTimeout(10000);
 		doorSocket.send(testPacket);
 		System.out.println("TEST: Packet sent");
     //NOTE: server has to send to receiveMsg.getPort()
@@ -93,5 +93,8 @@ public class TestServer extends Thread{
     else System.out.println("TEST: Failed");
   }
   
-  
+  public static void main(String[] args){
+  	TestServer test = new TestServer();
+  	test.start();
+    }
 }
