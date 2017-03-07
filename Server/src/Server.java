@@ -6,7 +6,7 @@ import java.util.Arrays;
 public class Server extends Thread{
   private static String passcode = "1324";
   private DatagramSocket receiveSocket;
-  private ArrayList<Thread> activeRequests;
+  private ArrayList<ControlThread> activeRequests;
 
   private static final int PORT_NUMBER = 1400;
 
@@ -14,30 +14,33 @@ public class Server extends Thread{
   * Creates new server Thread initalizes reveive socket and active requests
   */
   public Server(){
-    activeRequests = new ArrayList<Thread>();
+  	System.out.println("SERVER: Server started.");
+    activeRequests = new ArrayList<ControlThread>();
     try{
       receiveSocket = new DatagramSocket(PORT_NUMBER);
     } catch (SocketException e){
       e.printStackTrace();
     }
   }
+  
   public void run(){
-	  byte[] msg = new byte[100];
-	  DatagramPacket receivePacket = new DatagramPacket(msg, msg.length);
-	
+	  byte[] msg;
+	  DatagramPacket receivePacket;
 		while(true){
 		    System.out.println("SERVER: waiting..\n");
+		    msg = new byte[100];
+		    receivePacket = new DatagramPacket(msg, msg.length);
 		    try {
 		      receiveSocket.receive(receivePacket);
 		    } catch(IOException e){
 		      e.printStackTrace();
 		    }
-		    System.out.println("SERVER: Request Received"+ Arrays.toString(msg));
+		    System.out.println("SERVER: Request Received"+ Arrays.toString(receivePacket.getData()));
 		    addActiveRequest(new ControlThread(receivePacket));
 		}
   }
   public void addActiveRequest(Thread request){
-    activeRequests.add(request);
+    activeRequests.add((ControlThread)request);
     request.start();
   }
   public static String getPasscode(){
@@ -49,10 +52,6 @@ public class Server extends Thread{
     private DatagramPacket responsePacket;
     private DatagramPacket packet;
     private DatagramSocket sendReceiveSocket;
-  	protected boolean doorStatus;
-  	protected boolean keypadRequest;
-  	protected boolean imageRequest;
-  	protected boolean lockDoorRequest;
     final byte UNLOCK = (byte) 0xFF;
     final byte LOCK = 0x00;
     final byte PASS_MSG = 0;
@@ -69,10 +68,6 @@ public class Server extends Thread{
   		} catch (SocketException e) {
   			e.printStackTrace();
   		}
-  		doorStatus = false;
-  		keypadRequest = false;
-  		imageRequest = false;
-  		lockDoorRequest = false;
   		System.out.println("CONTROL: new control thread");
   	}
      
@@ -82,7 +77,7 @@ public class Server extends Thread{
   		//house number and door number.
   		//System.out.println("CONTROL: Control thread running, scanning packet"+ Arrays.toString(msg));
   		if (msg[2] == PASS_MSG) {
-  			//System.out.println("CONTROL: passmsg detected" + Arrays.toString(msg));
+  			System.out.println("CONTROL: passmsg detected" + Arrays.toString(msg));
         keypadRequest(msg);
   		}else if (msg[2] == IMG_MSG) {
         imageRequest(msg);
@@ -97,22 +92,23 @@ public class Server extends Thread{
     }
 
     private void keypadRequest(byte[] msg){
-      System.out.println("SERVER: keypadRequest determined:  "+ Arrays.toString(msg));
+      System.out.println("CONTROL: keypadRequest determined:  "+ Arrays.toString(msg));
     	byte[] passcode = new byte[4];
       for(int i=3, j=0; j<passcode.length; i++, j++){
         passcode[j] = msg[i];
         if(msg[i]==0) break;
       }
-
-      if(passcode.equals(Server.getPasscode().getBytes())){
-        buildResponse(UNLOCK, msg);
-        System.out.println("SERVER: unlock building");
+      byte[] serverPass = Server.getPasscode().getBytes();
+      System.out.println("CONTROL: ServerPass: " + Arrays.toString(serverPass) + ", PasswordReceived: " + Arrays.toString(passcode));
+      if(Arrays.equals(passcode, serverPass)){
+      	System.out.println("CONTROL: unlock building");
+      	buildResponse(UNLOCK, msg);
       } else{
-        buildResponse(LOCK, msg);
-        System.out.println("SERVER: lock building");
+        System.out.println("CONTROL: lock building");
+      	buildResponse(LOCK, msg);
       }
       try {
-      	System.out.println("SERVER: Sending response  : " + Arrays.toString(packet.getData()));
+      	System.out.println("CONTROL: Sending response  : " + Arrays.toString(packet.getData()));
     	  sendReceiveSocket.send(responsePacket);
       } catch (IOException e) {
     	  e.printStackTrace();
@@ -124,9 +120,9 @@ public class Server extends Thread{
 
     private void doorStateMessage(byte[] msg){
       if(msg[3] == 0xFF) {
-        System.out.println("SERVER: Door Locked");
+        System.out.println("CONTROL: Door Locked");
       } else if(msg[3] == 0x00) {
-        System.out.println("SERVER: Door Unlocked");
+        System.out.println("CONTROL: Door Unlocked");
       }
     }
 
@@ -139,7 +135,7 @@ public class Server extends Thread{
     }
 
     private void buildResponse(byte key, byte[] msg){
-      byte[] responseMsg = new byte[4];
+      byte[] responseMsg = new byte[100];
       responseMsg[0] = msg[0];
       responseMsg[1] = msg[1];
       responseMsg[2] = msg[2];
@@ -147,4 +143,9 @@ public class Server extends Thread{
       responsePacket = new DatagramPacket(responseMsg, responseMsg.length, this.packet.getAddress(), this.packet.getPort());
     }
   }
+  
+  public static void main(String[] args){
+  	Server server = new Server();
+  	server.start();
+  } 
 }
