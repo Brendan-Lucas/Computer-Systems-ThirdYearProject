@@ -1,6 +1,8 @@
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 
 public class TestServer extends Thread{
@@ -62,6 +64,28 @@ public class TestServer extends Thread{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+    //TEST: Image Request
+    
+    doorSocket.setSoTimeout(10000);
+    
+    DatagramPacket sendPacket = bulidStandardRequest(IMG_MSG, "");
+    
+    doorSocket.send(sendPacket);
+   
+    byte [] msg = new byte[100];
+    DatagramPacket receivePacket = new DatagramPacket(msg, msg.length);
+    
+    doorSocket.receive(receivePacket);
+    //parse receivedPacket for the info that we need
+    System.out.println("TEST: Received: "+ Arrays.toString(receivePacket.getData()));
+  	BufferedImage img = new ImageIO.read(new File("Server/test/embarassingPhotoOfBrendan.jpg"));
+  	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  	ImageIO.write(img, "jpg", baos);
+  	baos.flush();
+  	byte[] buf = baos.toByteArray();
+  	DatagramPacket imagePacket = new DatagramPacket(buf, buf.length, receivePacket.getAddress(), receivePacket.getPort());
+   
+    
   }
 
   public DatagramPacket bulidStandardRequest(byte b, String s) {

@@ -1,7 +1,10 @@
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import javax.imageio.ImageIO;
 
 public class Server extends Thread{
   private static String passcode = "1324";
@@ -54,6 +57,7 @@ public class Server extends Thread{
     private DatagramSocket sendReceiveSocket;
     final byte UNLOCK = (byte) 0xFF;
     final byte LOCK = 0x00;
+    final byte ACK = 0x04;
     final byte PASS_MSG = 0;
     final byte IMG_MSG = 1;
     final byte D_STAT_MSG = 2;
@@ -102,10 +106,10 @@ public class Server extends Thread{
       System.out.println("CONTROL: ServerPass: " + Arrays.toString(serverPass) + ", PasswordReceived: " + Arrays.toString(passcode));
       if(Arrays.equals(passcode, serverPass)){
       	System.out.println("CONTROL: unlock building");
-      	buildResponse(UNLOCK, msg);
+      	buildResponse(UNLOCK, msg, 4);
       } else{
         System.out.println("CONTROL: lock building");
-      	buildResponse(LOCK, msg);
+      	buildResponse(LOCK, msg, 4);
       }
       try {
       	System.out.println("CONTROL: Sending response  : " + Arrays.toString(packet.getData()));
@@ -115,7 +119,22 @@ public class Server extends Thread{
       }
     }
     private void imageRequest(byte[] msg){
-      return;
+    	System.out.println("CONTROL: image request determined " + Arrays.toString(msg));
+    	buildResponse(ACK, msg, 4);
+    	try {
+				sendReceiveSocket.send(responsePacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	System.out.println("CONTROL: waiting to recieve image ");
+    	byte[] imgmsg = new byte[8000];
+    	DatagramPacket receiveImage = new DatagramPacket(imgmsg, imgmsg.length);
+    	try { 
+    		sendReceiveSocket.receive(receiveImage);
+    	} catch (IOException e){
+    		e.printStackTrace();
+    	}
+    	return;
     }
 
     private void doorStateMessage(byte[] msg){
@@ -134,8 +153,8 @@ public class Server extends Thread{
       return;
     }
 
-    private void buildResponse(byte key, byte[] msg){
-      byte[] responseMsg = new byte[100];
+    private void buildResponse(byte key, byte[] msg, int packetLength){
+      byte[] responseMsg = new byte[packetLength];
       responseMsg[0] = msg[0];
       responseMsg[1] = msg[1];
       responseMsg[2] = msg[2];
