@@ -30,7 +30,6 @@ public class TestServer extends Thread{
   DatagramSocket webclientSocket;
 
   public TestServer() {
-      this.server = new Server();
       this.sendMsg = new byte[100];
       this.tests = new boolean[8];
       try {
@@ -44,15 +43,16 @@ public class TestServer extends Thread{
       } catch (UnknownHostException e){
       	e.printStackTrace();
       }
-      
+      Server server = new Server();
       server.start();
+      System.out.println("TEST: Server started");
   }
 
   public void run(){
-    System.out.println("TEST: Test Server recieve Message to unlock door from webclient");
+    System.out.println("TEST: Test Server receive Message to unlock door from webclient");
     //Test Correct Passcode
     try {
-			testPasscode(CORRECT_PASS, "Correct Passcode Test: ", 0, (byte)1);
+			testPasscode(CORRECT_PASS, "Correct Passcode Test: ", 0, (byte)0xFF);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
@@ -77,12 +77,13 @@ public class TestServer extends Thread{
     return new DatagramPacket(sendMsg, sendMsg.length, LOCAL_HOST, SERVER_PORT);
   }
 
-  private void testPasscode(String pass, String out, int i, byte expected) throws SocketException, IOException {
+  private void testPasscode(String pass, String out, int i, byte expected) throws IOException {
   	byte[] rcvMsg = new byte[100];
     DatagramPacket receivePacket = new DatagramPacket(rcvMsg, rcvMsg.length);
   	DatagramPacket testPacket = bulidStandardRequest(PASS_MSG, pass);
-		doorSocket.setSoTimeout(10000);
+		//doorSocket.setSoTimeout(10000);
 		doorSocket.send(testPacket);
+		System.out.println("TEST: Packet sent");
     //NOTE: server has to send to receiveMsg.getPort()
     doorSocket.receive(receivePacket);
     System.out.println("TEST: packetReceived: "+Arrays.toString(rcvMsg));
