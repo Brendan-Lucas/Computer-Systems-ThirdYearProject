@@ -70,6 +70,7 @@ public class TestServer extends Thread{
   }
 
   public DatagramPacket bulidStandardRequest(byte b, String s) {
+    sendMsg = new byte[100];
     sendMsg[0] = 1;
     sendMsg[1] = 1;
     sendMsg[2] = b;
@@ -145,13 +146,13 @@ public class TestServer extends Thread{
   	byte[] imgArr = baos.toByteArray();
   	System.out.println(imgArr.length);
     //sending img in many packets
-    byte[] buf = null;
+    byte[] buf;
   	DatagramPacket imagePacket=null;
   	byte[] writeOP = {0,3,0,0};
   	for(int i = 0, j=packetLength, k=0; j<imgArr.length; k++, i+=j, j+= j+packetLength>=imgArr.length? (imgArr.length-1)-j : packetLength){
   		//TODO: bad practice to initialize a variable during a for loop.
-  		writeOP[2] = (byte)(k/255);
-  		writeOP[3] = (byte)(k%255);
+  		writeOP[2] = (byte)(k/maxByteSize);
+  		writeOP[3] = (byte)(k%maxByteSize);
   		buf = Helpers.concat( writeOP, Arrays.copyOfRange(imgArr, i, j));
   		imagePacket = new DatagramPacket(imgArr, imgArr.length, receivePacket.getAddress(), receivePacket.getPort());
   		do{
@@ -175,6 +176,4 @@ public class TestServer extends Thread{
   	TestServer test = new TestServer();
   	test.start();
     }
-
-
 }

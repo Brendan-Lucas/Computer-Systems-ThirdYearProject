@@ -125,7 +125,6 @@ public class Server extends Thread{
     private void imageRequest(byte[] msg){
       int packetLength = 516;
       int opcodeLength = 4;
-      byte ACK = 4;
     	byte[] receiveBuff = new byte[packetLength];
       byte[] data = new byte[packetLength-opcodeLength];
       byte[] full = null;
