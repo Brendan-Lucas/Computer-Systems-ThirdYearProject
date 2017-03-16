@@ -18,6 +18,7 @@ class VirtualDoorIO():
         self.DOOR_BUFFER   = False
         self.KEYPAD_BUFFER = False
         self.CAMERA_BUFFER = False
+        self.SOUND_BUFFER    = False
         self.LCD_BUFFER    = ""
         
     #===============================================================
@@ -80,18 +81,18 @@ class VirtualDoorIO():
     #===============================================================
     # displayLCD()
     #---------------------------------------------------------------
-    # Display LCD
+    # Display message on LCD
     #---------------------------------------------------------------
     def displayLCD(self, message):
         self.LCD_BUFFER = message
 
     #===============================================================
-    # displayLCD()
+    # playSound()
     #---------------------------------------------------------------
-    # Display LCD
+    # Play sound on keypad panel speaker
     #---------------------------------------------------------------
     def playSound(self, sound):
-        self.LCD_BUFFER = message
+        self.SOUND_BUFFER = sound
 
     #===============================================================
     # takePicture()
@@ -110,19 +111,22 @@ class VirtualDoorIO():
         self.CAMERA_BUFFER = False
         return picture
 
-
-#===============================================================
-
 #===============================================================
 class HardwareDoorIO():
 #===============================================================
-    def __init__(self, type):
-        if type == "front":
-            self.HW = "GertBoard"
-        else:
-            self.HW = "PiFace"
-
-    #===============================================================             
+    #===============================================================
+    # Initializing Code
+    #---------------------------------------------------------------
+    def __init__(self):
+        # Buffers for interacting with GUI Interface
+        self.LOCK_BUFFER   = False
+        self.DOOR_BUFFER   = False
+        self.KEYPAD_BUFFER = False
+        self.CAMERA_BUFFER = False
+        self.SOUND_BUFFER    = False
+        self.LCD_BUFFER    = ""
+        
+    #===============================================================
     # setLocked()
     #---------------------------------------------------------------
     # Set door to locked state.
@@ -130,12 +134,10 @@ class HardwareDoorIO():
     #---------------------------------------------------------------
     def setLocked(self):
         # Only run if actual state is different than passed state
-        if getLockedState() is False:
-            ######################################################################
-            k=1# Insert code to lock door with GertBoard 
-            ######################################################################
+        if self.isLocked() is False:
+            self.LOCK_BUFFER = True
         # Check if operation was successful
-        if getLockedState() is True: return True
+        if self.isLocked() is True: return True
         return False
 
     #===============================================================
@@ -146,37 +148,29 @@ class HardwareDoorIO():
     #---------------------------------------------------------------
     def setUnlocked(self):
         # Only run if actual state is different than passed state
-        if getLockedState() is True:
-            ######################################################################
-            k=1# Insert code to unlock door with GertBoard
-            ######################################################################
+        if self.isLocked() is True:
+           self.LOCK_BUFFER = False
         # Check if operation was successful
-        if getLockedState() is False: return True
+        if self.isLocked() is False: return True
         return False
 
     #===============================================================
-    # getLockedState()
+    # isLocked()
     #---------------------------------------------------------------
     # Get the current state of the lock
     # return: True(Locked), False(Unlocked)
     #---------------------------------------------------------------
-    def getLockedState(self):
-        ######################################################################
-        k=1# Insert code to get lock state with GertBoard
-        ######################################################################
-        return False;
+    def isLocked(self):
+        return self.LOCK_BUFFER;
 
     #===============================================================
-    # getDoorState()
+    # isOpen()
     #---------------------------------------------------------------
     # Get the current state of the door
     # return: True(Open), False(Closed)
     #---------------------------------------------------------------
-    def getDoorState(self):
-        ######################################################################
-        k=1# Insert code to get lock state with GertBoard
-        ######################################################################
-        return False;
+    def isOpen(self):
+        return self.DOOR_BUFFER;
 
     #===============================================================
     # getKeyPressed()
@@ -185,11 +179,25 @@ class HardwareDoorIO():
     # return: char(key pressed), False(key not pressed)
     #---------------------------------------------------------------
     def isKeyPressed(self):
-        key = False
-        ######################################################################
-        k=1# Insert code to get key that was pressed on keypad with Gertboard
-        ######################################################################
-        return key
+        message = self.KEYPAD_BUFFER
+        self.KEYPAD_BUFFER = False
+        return message
+
+    #===============================================================
+    # displayLCD()
+    #---------------------------------------------------------------
+    # Display message on LCD
+    #---------------------------------------------------------------
+    def displayLCD(self, message):
+        self.LCD_BUFFER = message
+
+    #===============================================================
+    # playSound()
+    #---------------------------------------------------------------
+    # Play sound on keypad panel speaker
+    #---------------------------------------------------------------
+    def playSound(self, sound):
+        self.SOUND_BUFFER = sound
 
     #===============================================================
     # takePicture()
@@ -197,8 +205,14 @@ class HardwareDoorIO():
     # Take picture with camera
     # return: byte[](Picture taken), False(Error Occurred)
     #---------------------------------------------------------------
-    def isKeyPressed(self):
-        ######################################################################
-        picture=1# Insert code to take picture with Gertboard
-        ######################################################################
+    def takePicture(self):
+        self.CAMERA_BUFFER = True
+        while self.CAMERA_BUFFER is True:
+            time.sleep(0.05) #wait fro response from camera.
+        picture = self.CAMERA_BUFFER
+        with open(picture, "rb") as imageFile:
+            f = imageFile.read()
+            picture = bytearray(f)
+        self.CAMERA_BUFFER = False
         return picture
+
