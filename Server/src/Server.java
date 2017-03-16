@@ -1,3 +1,4 @@
+import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
@@ -5,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 
 public class Server extends Thread{
   private static String passcode = "1324";
@@ -25,7 +29,7 @@ public class Server extends Thread{
       e.printStackTrace();
     }
   }
-  
+
   public void run(){
 	  byte[] msg;
 	  DatagramPacket receivePacket;
@@ -63,7 +67,7 @@ public class Server extends Thread{
     final byte D_STAT_MSG = 2;
     final byte LK_MSG = 3;
     final byte GET_DOR = (byte) 0xFF;
-  	
+
     public ControlThread (DatagramPacket packet)
   	{
   		this.packet=packet;
@@ -74,7 +78,7 @@ public class Server extends Thread{
   		}
   		System.out.println("CONTROL: new control thread");
   	}
-     
+
   	public void run() {
   		byte[] msg = packet.getData();
       //TODO: brendan Check the first two bits to decide the type where is msg is coming from
@@ -92,7 +96,7 @@ public class Server extends Thread{
       }else if (msg[2] == GET_DOR){
         respondWithDoorInfo(msg);
       }
-      
+
     }
 
     private void keypadRequest(byte[] msg){
@@ -119,22 +123,87 @@ public class Server extends Thread{
       }
     }
     private void imageRequest(byte[] msg){
+    	byte[] receiveBuff = new byte[1024];
+      byte[] data = new byte[1020];
+      byte[] full = null;
+      byte[] ack = {0,4,0,0};
+      DatagramPacket receiveImage;
+      DatagramPacket ackPacket;
+      InetAddress clientAdress = this.packet.getAddress();
+      int clientPort = this.packet.getPort();
+    	int lastPacket = 0;
+    	int packetNum = 0;
+      //send  initial Ack
     	System.out.println("CONTROL: image request determined " + Arrays.toString(msg));
-    	buildResponse(ACK, msg, 4);
+    	ackPacket = new DatagramPacket(ack, ack.length, clientAdress, clientPort);
     	try {
-				sendReceiveSocket.send(responsePacket);
+				sendReceiveSocket.send(ackPacket);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-    	System.out.println("CONTROL: waiting to recieve image ");
-    	byte[] imgmsg = new byte[8000];
-    	DatagramPacket receiveImage = new DatagramPacket(imgmsg, imgmsg.length);
-    	try { 
-    		sendReceiveSocket.receive(receiveImage);
-    	} catch (IOException e){
-    		e.printStackTrace();
-    	}
-    	return;
+      //begin receive send cycle
+      final int NOT_FOUND = -1;
+      int index=NOT_FOUND;
+    	while (index == NOT_FOUND){
+
+	    	System.out.println("CONTROL: waiting to recieve image ");
+	    	receiveBuff = new byte[1024];
+	    	receiveImage = new DatagramPacket(receiveBuff, receiveBuff.length);
+	    	try {
+	    		sendReceiveSocket.receive(receiveImage);
+	    	} catch (IOException e){
+	    		e.printStackTrace();
+	    	}
+        //check to ensure packet coming from right place
+        if(receiveImage.getPort() != clientPort || receiveImage.getAddress() != clientAdress){
+  	    	packetNum = receiveBuff[0]*250 + receiveBuff[1];
+  	    	if(packetNum == 1+lastPacket){
+  	    		if (receiveBuff[0]==0) break;  //special opcode to indicate message finished,
+  	    		data = new byte[1020];
+            //move data in packet to buffered byte array
+  					for(int i = 0, j = 4; i < data.length && j < receiveBuff.length ; i++, j++)
+  					{
+  						data[i] = receiveBuff[j];
+  						if (data[i]==0) {
+  							index = i;
+                break;
+  						}
+            }
+  					full = Helpers.concat(full, data);
+            //build ack
+            ack[2] = receiveBuff[2];
+            ack[3] = receiveBuff[3];
+            ackPacket = new DatagramPacket(ack, ack.length, clientAdress, clientPort);
+          }
+          try {
+						sendReceiveSocket.send(ackPacket);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+    	  }
+      }
+    	BufferedImage img = null;
+    	try {
+				img = ImageIO.read(new ByteArrayInputStream(full));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	displayImage(img);
+
+    }
+
+
+    public void displayImage(BufferedImage img){
+	    ImageIcon icon = new ImageIcon(img);
+	  	JFrame frame = new JFrame();
+	  	frame.setLayout(new FlowLayout());
+	  	frame.setSize(200, 300);
+	  	JLabel label = new JLabel();
+	  	label.setIcon(icon);
+	  	frame.add(label);
+	  	frame.setVisible(true);
+	  	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
     private void doorStateMessage(byte[] msg){
@@ -162,9 +231,9 @@ public class Server extends Thread{
       responsePacket = new DatagramPacket(responseMsg, responseMsg.length, this.packet.getAddress(), this.packet.getPort());
     }
   }
-  
+
   public static void main(String[] args){
   	Server server = new Server();
   	server.start();
-  } 
+  }
 }

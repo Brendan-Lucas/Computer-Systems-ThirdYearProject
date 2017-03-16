@@ -2,6 +2,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import javax.imageio.ImageIO;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.*;
 
@@ -57,7 +58,7 @@ public class TestServer extends Thread{
 			testPasscode(CORRECT_PASS, "Correct Passcode Test: ", 0, (byte)0xFF);
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
     //TEST: Incorrect Passcode
     try {
 			testPasscode(INCORRECT_PASS, "Incorect Passcode Test: ",1, (byte)0);
@@ -65,27 +66,7 @@ public class TestServer extends Thread{
 			e.printStackTrace();
 		}
     //TEST: Image Request
-    
-    doorSocket.setSoTimeout(10000);
-    
-    DatagramPacket sendPacket = bulidStandardRequest(IMG_MSG, "");
-    
-    doorSocket.send(sendPacket);
-   
-    byte [] msg = new byte[100];
-    DatagramPacket receivePacket = new DatagramPacket(msg, msg.length);
-    
-    doorSocket.receive(receivePacket);
-    //parse receivedPacket for the info that we need
-    System.out.println("TEST: Received: "+ Arrays.toString(receivePacket.getData()));
-  	BufferedImage img = new ImageIO.read(new File("Server/test/embarassingPhotoOfBrendan.jpg"));
-  	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  	ImageIO.write(img, "jpg", baos);
-  	baos.flush();
-  	byte[] buf = baos.toByteArray();
-  	DatagramPacket imagePacket = new DatagramPacket(buf, buf.length, receivePacket.getAddress(), receivePacket.getPort());
-   
-    
+    testImageSend();
   }
 
   public DatagramPacket bulidStandardRequest(byte b, String s) {
@@ -116,9 +97,84 @@ public class TestServer extends Thread{
     if(tests[i]) System.out.println("TEST: Success");
     else System.out.println("TEST: Failed");
   }
-  
+
+  public void testImageSend(){
+    try {
+			doorSocket.setSoTimeout(10000);
+		} catch (SocketException e1) {
+			e1.printStackTrace();
+		}
+
+    DatagramPacket sendPacket = bulidStandardRequest(IMG_MSG, "");
+
+    try {
+			doorSocket.send(sendPacket);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
+    byte [] msg = new byte[100];
+    DatagramPacket receivePacket = new DatagramPacket(msg, msg.length);
+
+    try {
+			doorSocket.receive(receivePacket);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+    //parse receivedPacket for the info that we need
+    System.out.println("TEST: Received: "+ Arrays.toString(receivePacket.getData()));
+  	BufferedImage img = null;
+		try {
+			img = ImageIO.read(new File("embarassingPhotoOfBrendan.jpg"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+  	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  	try {
+			ImageIO.write(img, "jpg", baos);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+  	try {
+			baos.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+  	int packetLength = 1024;
+    int maxByteSize = 255;
+  	byte[] imgArr = baos.toByteArray();
+  	System.out.println(imgArr.length);
+    //sending img in many packets
+    byte[] buf = null;
+  	DatagramPacket imagePacket=null;
+  	byte[] writeOP = {0,3,0,0};
+  	for(int i = 0, j=packetLength, k=0; j<imgArr.length; k++, i+=j, j+= j+packetLength>=imgArr.length? (imgArr.length-1)-j : packetLength){
+  		//TODO: bad practice to initialize a variable during a for loop.
+  		writeOP[2] = (byte)(k/255); 
+  		writeOP[3] = (byte)(k%255);
+  		buf = Helpers.concat( writeOP, Arrays.copyOfRange(imgArr, i, j));
+  		imagePacket = new DatagramPacket(imgArr, imgArr.length, receivePacket.getAddress(), receivePacket.getPort());
+  		do{
+	  		try {
+	    		doorSocket.send(imagePacket);
+	    	} catch (IOException e){
+	    		e.printStackTrace();
+	    	}
+	  		msg = new byte[100];
+	  		try {
+	  			doorSocket.receive(receivePacket);
+	  		}catch(IOException e) {
+	  			e.printStackTrace();
+	  		}
+  		}while(msg[2]!=k/255 || msg[3]!=k%255);
+  	}
+  	//TODO: Receive successful or unsuccessful command.
+  }
+
   public static void main(String[] args){
   	TestServer test = new TestServer();
   	test.start();
     }
+
+
 }
