@@ -123,10 +123,13 @@ public class Server extends Thread{
       }
     }
     private void imageRequest(byte[] msg){
-    	byte[] receiveBuff = new byte[1024];
-      byte[] data = new byte[1020];
+      int packetLength = 516;
+      int opcodeLength = 4;
+      byte ACK = 4;
+    	byte[] receiveBuff = new byte[packetLength];
+      byte[] data = new byte[packetLength-opcodeLength];
       byte[] full = null;
-      byte[] ack = {0,4,0,0};
+      byte[] ack = {0,ACK,0,0};
       DatagramPacket receiveImage;
       DatagramPacket ackPacket;
       InetAddress clientAdress = this.packet.getAddress();
@@ -147,7 +150,7 @@ public class Server extends Thread{
     	while (index == NOT_FOUND){
 
 	    	System.out.println("CONTROL: waiting to recieve image ");
-	    	receiveBuff = new byte[1024];
+	    	receiveBuff = new byte[packetLength];
 	    	receiveImage = new DatagramPacket(receiveBuff, receiveBuff.length);
 	    	try {
 	    		sendReceiveSocket.receive(receiveImage);
@@ -159,9 +162,9 @@ public class Server extends Thread{
   	    	packetNum = receiveBuff[0]*250 + receiveBuff[1];
   	    	if(packetNum == 1+lastPacket){
   	    		if (receiveBuff[0]==0) break;  //special opcode to indicate message finished,
-  	    		data = new byte[1020];
+  	    		data = new byte[packetLength-opcodeLength];
             //move data in packet to buffered byte array
-  					for(int i = 0, j = 4; i < data.length && j < receiveBuff.length ; i++, j++)
+  					for(int i = 0, j = opcodeLength; i < data.length && j < receiveBuff.length ; i++, j++)
   					{
   						data[i] = receiveBuff[j];
   						if (data[i]==0) {

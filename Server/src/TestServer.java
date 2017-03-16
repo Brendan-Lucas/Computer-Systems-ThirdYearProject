@@ -140,7 +140,7 @@ public class TestServer extends Thread{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-  	int packetLength = 1024;
+  	int packetLength = 516;
     int maxByteSize = 255;
   	byte[] imgArr = baos.toByteArray();
   	System.out.println(imgArr.length);
@@ -150,7 +150,7 @@ public class TestServer extends Thread{
   	byte[] writeOP = {0,3,0,0};
   	for(int i = 0, j=packetLength, k=0; j<imgArr.length; k++, i+=j, j+= j+packetLength>=imgArr.length? (imgArr.length-1)-j : packetLength){
   		//TODO: bad practice to initialize a variable during a for loop.
-  		writeOP[2] = (byte)(k/255); 
+  		writeOP[2] = (byte)(k/255);
   		writeOP[3] = (byte)(k%255);
   		buf = Helpers.concat( writeOP, Arrays.copyOfRange(imgArr, i, j));
   		imagePacket = new DatagramPacket(imgArr, imgArr.length, receivePacket.getAddress(), receivePacket.getPort());
