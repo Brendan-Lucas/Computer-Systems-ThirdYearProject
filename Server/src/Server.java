@@ -123,10 +123,8 @@ public class Server extends Thread{
       }
     }
     private void imageRequest(byte[] msg){
-      int packetLength = 516;
-      int opcodeLength = 4;
-    	byte[] receiveBuff = new byte[packetLength];
-      byte[] data = new byte[packetLength-opcodeLength];
+    	byte[] receiveBuff = new byte[Helpers.packetLength];
+      byte[] data = new byte[Helpers.packetLength-Helpers.opcodeLength];
       byte[] full = null;
       byte[] ack = {0,ACK,0,0};
       DatagramPacket receiveImage;
@@ -145,11 +143,11 @@ public class Server extends Thread{
 			}
       //begin receive send cycle
       final int NOT_FOUND = -1;
-      int index=NOT_FOUND;
+      int index = NOT_FOUND;
     	while (index == NOT_FOUND){
 
 	    	System.out.println("CONTROL: waiting to recieve image ");
-	    	receiveBuff = new byte[packetLength];
+	    	receiveBuff = new byte[Helpers.packetLength];
 	    	receiveImage = new DatagramPacket(receiveBuff, receiveBuff.length);
 	    	try {
 	    		sendReceiveSocket.receive(receiveImage);
@@ -158,33 +156,33 @@ public class Server extends Thread{
 	    	}
         //check to ensure packet coming from right place
         if(receiveImage.getPort() != clientPort || receiveImage.getAddress() != clientAdress){
-  	    	packetNum = receiveBuff[0]*250 + receiveBuff[1];
+  	    	packetNum = receiveBuff[2]*Helpers.maxByteSize + receiveBuff[3];
+          System.out.println("CONTROL: received packet number: " + packetNum);
   	    	if(packetNum == 1+lastPacket){
   	    		if (receiveBuff[0]==0) break;  //special opcode to indicate message finished,
-  	    		data = new byte[packetLength-opcodeLength];
+  	    		data = new byte[Helpers.packetLength-Helpers.opcodeLength];
+            //TODO: in this general Area check that the packet is full and find where it ends in terms of information.
+            //TODO: Find the end of the image so that we can set index to not -1;
             //move data in packet to buffered byte array
-  					for(int i = 0, j = opcodeLength; i < data.length && j < receiveBuff.length ; i++, j++)
+  					for(int i = 0, j = Helpers.opcodeLength; i < data.length && j < receiveBuff.length ; i++, j++)
   					{
   						data[i] = receiveBuff[j];
-  						if (data[i]==0) {
-  							index = i;
-                break;
-  						}
             }
   					full = Helpers.concat(full, data);
             //build ack
             ack[2] = receiveBuff[2];
             ack[3] = receiveBuff[3];
+            System.out.println("CONTROL: Sending Ack: " + ack[2] + " , " + ack[3]);
             ackPacket = new DatagramPacket(ack, ack.length, clientAdress, clientPort);
           }
           try {
 						sendReceiveSocket.send(ackPacket);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
     	  }
       }
+      System.out.println("CONTROL: Received Entire image in bytes. Formatting to image.");
     	BufferedImage img = null;
     	try {
 				img = ImageIO.read(new ByteArrayInputStream(full));
@@ -224,8 +222,8 @@ public class Server extends Thread{
       return;
     }
 
-    private void buildResponse(byte key, byte[] msg, int packetLength){
-      byte[] responseMsg = new byte[packetLength];
+    private void buildResponse(byte key, byte[] msg, int length){
+      byte[] responseMsg = new byte[length];
       responseMsg[0] = msg[0];
       responseMsg[1] = msg[1];
       responseMsg[2] = msg[2];

@@ -14,14 +14,14 @@ public class TestServer extends Thread{
   final byte LK_MSG = 3;
   //TODO: add the rest of the oppcodes.
   boolean[] tests;
-  boolean correctPasscodeSuccess;
-  boolean incorrectPasscodeSuccess;
-  boolean imageSendSuccess;
-  boolean invalidHomeSuccess;
-  boolean invalidDoorSuccess;
-  boolean createDoorSuccess;
-  boolean unlockDoorRequestRecievedSuccess;
-  boolean unlockDoorRequestSentSuccess;
+  // boolean correctPasscodeSuccess;
+  // boolean incorrectPasscodeSuccess;
+  // boolean imageSendSuccess;
+  // boolean invalidHomeSuccess;
+  // boolean invalidDoorSuccess;
+  // boolean createDoorSuccess;
+  // boolean unlockDoorRequestRecievedSuccess;
+  // boolean unlockDoorRequestSentSuccess;
   //NOTE: Maybe have opcode for all doors in house for general requests from webclients to be 0000;
   final String CORRECT_PASS = "1324";
   final String INCORRECT_PASS = "1234";
@@ -126,7 +126,7 @@ public class TestServer extends Thread{
     System.out.println("TEST: Received: "+ Arrays.toString(receivePacket.getData()));
   	BufferedImage img = null;
 		try {
-			img = ImageIO.read(new File("embarassingPhotoOfBrendan.jpg"));
+			img = ImageIO.read(new File("Server/embarassingPhotoOfBrendan.jpg"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -141,32 +141,36 @@ public class TestServer extends Thread{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-  	int packetLength = 516;
-    int maxByteSize = 255;
+
   	byte[] imgArr = baos.toByteArray();
-  	System.out.println(imgArr.length);
+  	System.out.println("TEST: image size in bytes: " + imgArr.length);
     //sending img in many packets
     byte[] buf;
   	DatagramPacket imagePacket=null;
-  	byte[] writeOP = {0,3,0,0};
-  	for(int i = 0, j=packetLength, k=0; j<imgArr.length; k++, i+=j, j+= j+packetLength>=imgArr.length? (imgArr.length-1)-j : packetLength){
-  		//TODO: bad practice to initialize a variable during a for loop.
-  		writeOP[2] = (byte)(k/maxByteSize);
-  		writeOP[3] = (byte)(k%maxByteSize);
+  	byte[] writeOP = {0,3,0,1};
+  	for(int i = 0, j=Helpers.packetLength-Helpers.opcodeLength, k=1; j<imgArr.length; k++, i+=j, j+= j+(Helpers.packetLength-Helpers.opcodeLength)>=imgArr.length? (imgArr.length-1)-j : Helpers.packetLength){
+      writeOP[2] = (byte)(k/Helpers.maxByteSize);
+  		writeOP[3] = (byte)(k%Helpers.maxByteSize);
+      System.out.println("TEST: i: "+ i + ", j: "+ j+"\nMsg#: " + writeOP[2] + ", " + writeOP[3]);
   		buf = Helpers.concat( writeOP, Arrays.copyOfRange(imgArr, i, j));
-  		imagePacket = new DatagramPacket(imgArr, imgArr.length, receivePacket.getAddress(), receivePacket.getPort());
+  		imagePacket = new DatagramPacket(buf, buf.length, receivePacket.getAddress(), receivePacket.getPort());
   		do{
+        System.out.println("TEST: outgoing:" + buf[2] + ", " + buf[3]);
 	  		try {
 	    		doorSocket.send(imagePacket);
 	    	} catch (IOException e){
 	    		e.printStackTrace();
 	    	}
-	  		msg = new byte[100];
+	  		msg = new byte[4];
 	  		try {
 	  			doorSocket.receive(receivePacket);
 	  		}catch(IOException e) {
 	  			e.printStackTrace();
 	  		}
+        if (msg[2] == k/255 && msg[3]==k%255)
+          System.out.println("TEST: Successful ack recieved: " + msg[2] + ", "+ msg[3]);
+        else
+          System.out.println("TEST: ack: " + msg[2] + ", " + msg[3] + " recieved, resending packet.");
   		}while(msg[2]!=k/255 || msg[3]!=k%255);
   	}
   	//TODO: Receive successful or unsuccessful command.
