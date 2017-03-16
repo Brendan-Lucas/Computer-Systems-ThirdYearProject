@@ -19,14 +19,17 @@ class Door:
     #===============================================================
     # Initializer
     #---------------------------------------------------------------
-    def __init__(self, HomeID, DoorID):
+    def __init__(self, HomeID, DoorID, Type):
         # Check if HomeID is in valid range        
         if int(HomeID) < 0 or 255 < int(HomeID):       
             print("Error: Invalid Home ID Range"); exit(1)
         # Check if DoorID is in valid range
         if int(DoorID) < 0 or 255 < int(DoorID):        
             print("Error: Invalid Door ID Range"); exit(1)
-                
+        # Check if DoorID is in valid range
+        if Type != "Front" and Type != "Back":        
+            print("Error: Invalid Door Type"); exit(1)
+
         # Instance Variables for Door
         self.HOME_ID   = int(HomeID)
         self.DOOR_ID   = int(DoorID)
@@ -34,12 +37,8 @@ class Door:
         self.DOOR_IO   = None  # Module that connects hardware/virtual interacted
         self.SECURED   = False # Internal State of Door     
         self.LCD       = ""    # Text Currently on LCD 
-
-        #TODO: PROPER ASSIGNMENT FOR FRONT/BACK DOOR FROM SERVER        
-        if int(self.DOOR_ID)%2 is 0:
-            self.DOOR_TYPE = "Front"
-        else:
-            self.DOOR_TYPE = "Back"
+        self.active    = 0 # Value to inidcate how active the keypad is
+        self.DOOR_TYPE = Type
             
     #===============================================================
     # runVirtual()
@@ -71,18 +70,18 @@ class Door:
             print("Error: DOOR_IO module undefined"); exit(1)
         
         # Thread to receive message from server
-        pollMessage_thread = threading.Thread(target=self.pollMessage,args=())
+        pollMessage_thread = threading.Thread(target=self.pollMessageThread,args=())
         pollMessage_thread.daemon = True # run in background
         pollMessage_thread.start()
 
         # Thread to check Door State
-        pollDoor_thread = threading.Thread(target=self.pollDoor,args=())
+        pollDoor_thread = threading.Thread(target=self.pollDoorThread,args=())
         pollDoor_thread.daemon = True # run in background
         pollDoor_thread.start()
 
         # Check keypad if door is a front Door
         if self.DOOR_TYPE == "Front":
-            pollKeypad_thread = threading.Thread(target=self.pollKeypad,args=())
+            pollKeypad_thread = threading.Thread(target=self.pollKeypadThread,args=())
             pollKeypad_thread.daemon = True # run in background
             pollKeypad_thread.start()
         
@@ -94,112 +93,119 @@ class Door:
     #---------------------------------------------------------------
     # Check if state of door has changed
     #---------------------------------------------------------------
-    def pollMessage(self): 
+    def pollMessageThread(self): 
         while True and not False:
-            #Receive Message
-            message = self.SERVER_IO.receive()
-            #Retrieve  Opcode
-            opcode = message[0]
-            # Response From Passcode
-            if opcode == 0x00: 
-                if message[1] == 0x00:
-                    self.printLCD("PASSCODE ACCEPTED")
-                    # Unlock Door
-                    if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
-                        self.DOOR_IO.setUnlocked()
-                        time.sleep(1)
-                        self.printLCD("DOOR UNLOCKED")
-                    # Lock Door
-                    elif self.DOOR_IO.isLocked() is False and self.DOOR_IO.isOpen() is False:
-                        self.DOOR_IO.setLocked()
-                        time.sleep(1)
-                        self.printLCD("DOOR LOCKED")
-                    # Door Left Open
-                    else:
-                        time.sleep(1)
-                        self.printLCD("ERROR - DOOR OPEN")
+            self.pollMessage()
+            time.sleep(0.01)
+    def pollMessage(self): 
+        #Receive Message
+        message = self.SERVER_IO.receive()
+        #Retrieve  Opcode
+        home = message[0]
+        door = message[1]
+        opcode = message[2]
+        # Response From Passcode
+        if opcode == 0x00: 
+            if message[3] == 0x00:
+                self.printLCD("PASSCODE ACCEPTED")
+                # Unlock Door
+                if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
+                    self.DOOR_IO.setUnlocked()
+                    time.sleep(1)
+                    self.printLCD("DOOR UNLOCKED")
+                # Lock Door
+                elif self.DOOR_IO.isLocked() is False and self.DOOR_IO.isOpen() is False:
+                    self.DOOR_IO.setLocked()
+                    time.sleep(1)
+                    self.printLCD("DOOR LOCKED")
+                # Door Left Open
                 else:
-                    self.printLCD("PASSCODE REJECTED")
-            
-            # Response from Picture
-            elif opcode == 0x01: 
-                if message[1] == 0x00:
-                    self.printLCD("REQUEST ACCEPTED")
-                    # Unlock Door
-                    if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
-                        self.DOOR_IO.setUnlocked()
-                        time.sleep(1)
-                        self.printLCD("DOOR UNLOCKED")
-                else:
-                    self.printLCD("REQUEST REJECTED")
+                    time.sleep(1)
+                    self.printLCD("ERROR - DOOR OPEN")
+            else:
+                self.printLCD("PASSCODE REJECTED")
+        
+        # Response from Picture
+        elif opcode == 0x01: 
+            if message[3] == 0x00:
+                self.printLCD("REQUEST ACCEPTED")
+                # Unlock Door
+                if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
+                    self.DOOR_IO.setUnlocked()
+                    time.sleep(1)
+                    self.printLCD("DOOR UNLOCKED")
+            else:
+                self.printLCD("REQUEST REJECTED")
 
-            # TODO: Lock or Unlock Request
-            elif opcode == 0x03: 
-                if message[1] == 0x00:
-                    self.printLCD("REQUEST ACCEPTED")
-                    # Unlock Door
-                    if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
-                        self.DOOR_IO.setUnlocked()
-                        time.sleep(1)
-                        self.printLCD("DOOR UNLOCKED")
-                else:
-                    self.printLCD("REQUEST REJECTED")
+        # TODO: Lock or Unlock Request
+        elif opcode == 0x03: 
+            if message[3] == 0x00:
+                self.printLCD("REQUEST ACCEPTED")
+                # Unlock Door
+                if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
+                    self.DOOR_IO.setUnlocked()
+                    time.sleep(1)
+                    self.printLCD("DOOR UNLOCKED")
+            else:
+                self.printLCD("REQUEST REJECTED")
 
     #===============================================================
     # pollDoor()
     #---------------------------------------------------------------
     # Check if state of door has changed
     #---------------------------------------------------------------
-    def pollDoor(self): 
+    def pollDoorThread(self):
         while True:
-            # Door is secured. Only check the lock state
-            if self.SECURED is True:
-                lockReading = self.DOOR_IO.isLocked()
-                if lockReading is False:
-                    self.SECURED = False
-                    self.SERVER_IO.sendState(self.SECURED) #Update Server with new state
-            # Door is unsecured. Poll lock and door State
-            else:           
-                lockReading = self.DOOR_IO.isLocked()
-                doorReading = self.DOOR_IO.isOpen()
-                if lockReading is True and doorReading is False:
-                    self.SECURED = True
-                    self.SERVER_IO.sendState(self.SECURED) #Update Server with new state
+            self.pollDoor()
             time.sleep(0.25) #4 times per second
-
+    def pollDoor(self): 
+        # Door is secured. Only check the lock state
+        if self.SECURED is True:
+            lockReading = self.DOOR_IO.isLocked()
+            if lockReading is False:
+                self.SECURED = False
+                self.SERVER_IO.sendState(self.SECURED) #Update Server with new state
+        # Door is unsecured. Poll lock and door State
+        else:           
+            lockReading = self.DOOR_IO.isLocked()
+            doorReading = self.DOOR_IO.isOpen()
+            if lockReading is True and doorReading is False:
+                self.SECURED = True
+                self.SERVER_IO.sendState(self.SECURED) #Update Server with new state
+        
     #===============================================================
     # pollKeypad()
     #---------------------------------------------------------------
     # Check if keypad has been pressed
     #---------------------------------------------------------------
-    def pollKeypad(self):
-        active = 0 # Value to inidcate how active the keypad is
+    def pollKeypadThread(self):
         while True:
-            keyReading = self.DOOR_IO.isKeyPressed()
-            if keyReading is not False:
-                active = 100 # Set LCD active timer for 5 seconds 
-                # Enter/Clear Button Pressed
-                if keyReading == "#":
-                    self.requestPassword(self.LCD)
-                # Picture Request Button Pressed
-                elif keyReading == "*":
-                    self.requestPicture()
-                # Backspace
-                elif keyReading == "D": 
-                    self.backspaceLCD()
-                # Keycode pressed
-                else:
-                    if len(self.LCD) == 0 or len(self.LCD) > 4:
-                        self.printLCD(keyReading)
-                    elif len(self.LCD) < 4:
-                        self.appendLCD(keyReading)
-                # Delay if a key has been pressed
-                time.sleep(0.25)
-            # Clear LCD if inactive
-            if    active <= 0: self.clearLCD()
-            else: active -= 1 
-            # Repeat at 20 times per second
-            time.sleep(0.05) 
+            self.pollKeypad()
+            time.sleep(0.05) #4 times per second
+    def pollKeypad(self):
+        keyReading = self.DOOR_IO.isKeyPressed()
+        if keyReading is not False:
+            self.active = 100 # Set LCD active timer for 5 seconds 
+            # Enter/Clear Button Pressed
+            if keyReading == "#":
+                self.requestPassword(self.LCD)
+            # Picture Request Button Pressed
+            elif keyReading == "*":
+                self.requestPicture()
+            # Backspace
+            elif keyReading == "D": 
+                self.backspaceLCD()
+            # Keycode pressed
+            else:
+                if len(self.LCD) == 0 or len(self.LCD) > 4:
+                    self.printLCD(keyReading)
+                elif len(self.LCD) < 4:
+                    self.appendLCD(keyReading)
+            # Delay if a key has been pressed
+            time.sleep(0.25)
+        # Clear LCD if inactive
+        if    self.active <= 0: self.clearLCD()
+        else: self.active -= 1
 
     #===============================================================
     # requestPassword()
