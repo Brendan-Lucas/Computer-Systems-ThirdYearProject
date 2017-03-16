@@ -54,6 +54,8 @@ public class Server extends Thread{
     private DatagramSocket sendReceiveSocket;
     final byte UNLOCK = (byte) 0xFF;
     final byte LOCK = 0x00;
+    final byte ACCEPT = (byte)0x00;
+    final byte REJECT = (byte) 0xFF;
     final byte PASS_MSG = 0;
     final byte IMG_MSG = 1;
     final byte D_STAT_MSG = 2;
@@ -102,10 +104,10 @@ public class Server extends Thread{
       System.out.println("CONTROL: ServerPass: " + Arrays.toString(serverPass) + ", PasswordReceived: " + Arrays.toString(passcode));
       if(Arrays.equals(passcode, serverPass)){
       	System.out.println("CONTROL: unlock building");
-      	buildResponse(UNLOCK, msg);
+      	buildResponse(ACCEPT, msg);
       } else{
         System.out.println("CONTROL: lock building");
-      	buildResponse(LOCK, msg);
+      	buildResponse(REJECT, msg);
       }
       try {
       	System.out.println("CONTROL: Sending response  : " + Arrays.toString(packet.getData()));
