@@ -129,13 +129,14 @@ public class Server extends Thread{
       byte[] ack = {0,ACK,0,0};
       DatagramPacket receiveImage;
       DatagramPacket ackPacket;
-      InetAddress clientAdress = this.packet.getAddress();
+      InetAddress clientAddress = this.packet.getAddress();
       int clientPort = this.packet.getPort();
+      System.out.println("CONTROL: clientPort = "+clientPort+", clientAddress = "+clientAddress);
     	int lastPacket = 0;
     	int packetNum = 0;
       //send  initial Ack
     	System.out.println("CONTROL: image request determined " + Arrays.toString(msg));
-    	ackPacket = new DatagramPacket(ack, ack.length, clientAdress, clientPort);
+    	ackPacket = new DatagramPacket(ack, ack.length, clientAddress, clientPort);
     	try {
 				sendReceiveSocket.send(ackPacket);
 			} catch (IOException e) {
@@ -144,37 +145,44 @@ public class Server extends Thread{
       //begin receive send cycle
       final int NOT_FOUND = -1;
       int index = NOT_FOUND;
-    	while (index == NOT_FOUND){
+    	while (index <= 3){
 
 	    	System.out.println("CONTROL: waiting to recieve image ");
 	    	receiveBuff = new byte[Helpers.packetLength];
 	    	receiveImage = new DatagramPacket(receiveBuff, receiveBuff.length);
 	    	try {
 	    		sendReceiveSocket.receive(receiveImage);
+          System.out.println("CONTROL: Received imagePacket");
 	    	} catch (IOException e){
 	    		e.printStackTrace();
 	    	}
         //check to ensure packet coming from right place
-        if(receiveImage.getPort() != clientPort || receiveImage.getAddress() != clientAdress){
-  	    	packetNum = receiveBuff[2]*Helpers.maxByteSize + receiveBuff[3];
+        System.out.println("CONTROL: recieved from port: "+receiveImage.getPort()+", and address: "+receiveImage.getAddress());
+        if(receiveImage.getPort() == clientPort && receiveImage.getAddress().equals(clientAddress)){
+  	    	packetNum = ((receiveBuff[2] & 0xff) << 8) | (receiveBuff[3] & 0xff);
           System.out.println("CONTROL: received packet number: " + packetNum);
   	    	if(packetNum == 1+lastPacket){
-  	    		if (receiveBuff[0]==0) break;  //special opcode to indicate message finished,
+            //TODO: make this functional
+  	    		if (receiveBuff[1]==0) break;  //special opcode to indicate message finished,
   	    		data = new byte[Helpers.packetLength-Helpers.opcodeLength];
-            //TODO: in this general Area check that the packet is full and find where it ends in terms of information.
-            //TODO: Find the end of the image so that we can set index to not -1;
-            //move data in packet to buffered byte array
   					for(int i = 0, j = Helpers.opcodeLength; i < data.length && j < receiveBuff.length ; i++, j++)
   					{
   						data[i] = receiveBuff[j];
+  						if (data[i] == 0x00){
+  							index++;
+  						} else {
+  							index = NOT_FOUND;
+  						}
+
             }
-  					full = Helpers.concat(full, data);
-            //build ack
+  					full = full!= null? Helpers.concat(full, data) : data;
+            lastPacket++;
+  					//build ack
             ack[2] = receiveBuff[2];
             ack[3] = receiveBuff[3];
             System.out.println("CONTROL: Sending Ack: " + ack[2] + " , " + ack[3]);
-            ackPacket = new DatagramPacket(ack, ack.length, clientAdress, clientPort);
-          }
+            ackPacket = new DatagramPacket(ack, ack.length, clientAddress, clientPort);
+          } else System.out.println("CONTROL: resending old ack:");
           try {
 						sendReceiveSocket.send(ackPacket);
 					} catch (IOException e) {

@@ -114,7 +114,7 @@ public class TestServer extends Thread{
 			e1.printStackTrace();
 		}
 
-    byte [] msg = new byte[100];
+    byte [] msg = new byte[4];
     DatagramPacket receivePacket = new DatagramPacket(msg, msg.length);
 
     try {
@@ -126,7 +126,7 @@ public class TestServer extends Thread{
     System.out.println("TEST: Received: "+ Arrays.toString(receivePacket.getData()));
   	BufferedImage img = null;
 		try {
-			img = ImageIO.read(new File("Server/embarassingPhotoOfBrendan.jpg"));
+			img = ImageIO.read(new File("embarassingPhotoOfBrendan.jpg"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -148,30 +148,32 @@ public class TestServer extends Thread{
     byte[] buf;
   	DatagramPacket imagePacket=null;
   	byte[] writeOP = {0,3,0,1};
-  	for(int i = 0, j=Helpers.packetLength-Helpers.opcodeLength, k=1; j<imgArr.length; k++, i+=j, j+= j+(Helpers.packetLength-Helpers.opcodeLength)>=imgArr.length? (imgArr.length-1)-j : Helpers.packetLength){
+  	for(int i = 0, j=Helpers.packetLength-Helpers.opcodeLength, k=1; j<imgArr.length; k++, i=j, j+= j+(Helpers.packetLength-Helpers.opcodeLength)>=imgArr.length? (imgArr.length-1)-j : Helpers.packetLength-Helpers.opcodeLength){
       writeOP[2] = (byte)(k/Helpers.maxByteSize);
   		writeOP[3] = (byte)(k%Helpers.maxByteSize);
-      System.out.println("TEST: i: "+ i + ", j: "+ j+"\nMsg#: " + writeOP[2] + ", " + writeOP[3]);
-  		buf = Helpers.concat( writeOP, Arrays.copyOfRange(imgArr, i, j));
+      System.out.println("TEST: i: "+ i + ", j: "+ j+"\nTEST: Msg#: " + writeOP[2] + ", " + writeOP[3]);
+  		buf = Helpers.concat(writeOP, Arrays.copyOfRange(imgArr, i, j));
   		imagePacket = new DatagramPacket(buf, buf.length, receivePacket.getAddress(), receivePacket.getPort());
   		do{
         System.out.println("TEST: outgoing:" + buf[2] + ", " + buf[3]);
 	  		try {
 	    		doorSocket.send(imagePacket);
+          System.out.println("TEST: waiting on Server ack packet");
 	    	} catch (IOException e){
 	    		e.printStackTrace();
 	    	}
 	  		msg = new byte[4];
+	  		receivePacket = new DatagramPacket(msg, msg.length);
 	  		try {
 	  			doorSocket.receive(receivePacket);
 	  		}catch(IOException e) {
 	  			e.printStackTrace();
 	  		}
-        if (msg[2] == k/255 && msg[3]==k%255)
+        if (k == (( (msg[2] & 0xff) << 8) | (msg[3] & 0xff)))
           System.out.println("TEST: Successful ack recieved: " + msg[2] + ", "+ msg[3]);
         else
-          System.out.println("TEST: ack: " + msg[2] + ", " + msg[3] + " recieved, resending packet.");
-  		}while(msg[2]!=k/255 || msg[3]!=k%255);
+          System.out.println("TEST: old ack: " + msg[2] + ", " + msg[3] + " recieved, resending packet.");
+  		}while(k != (( (msg[2] & 0xff) << 8) | (msg[3] & 0xff)));
   	}
   	//TODO: Receive successful or unsuccessful command.
   }
