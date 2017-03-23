@@ -14,14 +14,6 @@ public class TestServer extends Thread{
   final byte LK_MSG = 3;
   //TODO: add the rest of the oppcodes.
   boolean[] tests;
-  // boolean correctPasscodeSuccess;
-  // boolean incorrectPasscodeSuccess;
-  // boolean imageSendSuccess;
-  // boolean invalidHomeSuccess;
-  // boolean invalidDoorSuccess;
-  // boolean createDoorSuccess;
-  // boolean unlockDoorRequestRecievedSuccess;
-  // boolean unlockDoorRequestSentSuccess;
   //NOTE: Maybe have opcode for all doors in house for general requests from webclients to be 0000;
   final String CORRECT_PASS = "1324";
   final String INCORRECT_PASS = "1234";
