@@ -1,3 +1,4 @@
+package Server;
 import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -82,7 +83,10 @@ public class Server extends Thread{
   	public void run() {
   		byte[] msg = packet.getData();
       //TODO: brendan Check the first two bits to decide the type where is msg is coming from
-  		//house number and door number.
+  		//house number
+  		//TODO:check Database for those house numbers
+  		//door number.
+  		//TODO:check Database for that door number at that house numberl.
   		//System.out.println("CONTROL: Control thread running, scanning packet"+ Arrays.toString(msg));
   		if (msg[2] == PASS_MSG) {
   			System.out.println("CONTROL: passmsg detected" + Arrays.toString(msg));

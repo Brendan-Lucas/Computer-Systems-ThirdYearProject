@@ -1,0 +1,27 @@
+Database Design:
+
+JSON was chosen as the database file because it will enable us to quickly and easily store our created objects and retreive them as needed.
+JSON compatablility with java is strong and so the object model will make it very easy for us to store everything that we need to.
+
+We will have our database be local to servers, so there will be for this prototype one database that grows out in this context:
+{
+  "Houses" : {
+      "Doors" : {
+        "requests" : {
+          "PASS_MSG" : MessageObject[],
+          "IMG_MSG" : MessageObject[],
+          "D_STAT_MSG" : MessageObject[],
+          "LK_MSG" : MessageObject[],
+        },
+        "State" : boolean,
+
+      },
+      "Passcode" : String,
+      "Users" : {
+        "Username" : String,
+        "Password" : String,
+        
+      }
+
+  }
+}

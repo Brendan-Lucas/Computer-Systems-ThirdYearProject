@@ -1,0 +1,13 @@
+{
+  "Houses" : [ {
+    "Doors" : [ {
+      "Requests" : [ ],
+      "State" : false
+    } ],
+    "Passcode" : "1324",
+    "Users" : [ {
+      "Username" : "blucas",
+      "Password" : "Phantom1"
+    } ]
+  } ]
+}
