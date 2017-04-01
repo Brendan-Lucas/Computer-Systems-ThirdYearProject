@@ -1,23 +1,32 @@
-#####################################################
+#============================================================================================
+# virtualDoorManager.py
+#--------------------------------------------------------------------------------------------
+# Patrick Perron
+#--------------------------------------------------------------------------------------------
 #
-#	VirtualDoorManager.py
-#	Patrick Perron
+# GUI Widget to ease initialization of Virtual Door Simulator. 
+# NOTE: Code is deprecated. Not part of final version
 #
-#####################################################
-
-#imports
+#============================================================================================
+# Imports
 import threading
 from tkinter import *
 import socket
 
+#============================================================================================
+# Class Declaration
+#--------------------------------------------------------------------------------------------
 class VirtualDoorManager(Frame):  
+#============================================================================================
+    # Initializing Code
+    #---------------------------------------------------------------
     def __init__(self, master=None):
         Frame.__init__(self, master, bg="white")
         self.master.wm_title("Phantom Lock - Virtual Door Manager")
         self.master.iconbitmap(r'images/icon.ico')
         self.master.resizable(False,False)
         self.grid()   
-
+        # Set Labels
         self.HomeID = Label(self, text = "HomeID"  , bg="white", width=8).grid(row=0,column=0,sticky=W+E+N+S)
         self.DoorID = Label(self, text = "DoorID"  , bg="white", width=8).grid(row=0,column=1,sticky=W+E+N+S)
         self.Type   = Label(self, text = "Type"    , bg="white", width=8, relief="flat", borderwidth="1").grid(row=0,column=2,sticky=W+E+N+S)
@@ -63,6 +72,7 @@ class VirtualDoorManager(Frame):
         self.Okay.grid(row=9,column=4, sticky=W)
         self.Okay.configure(state='disabled')
 
+    # Exit program
     def commit(self):
         i=0
         while i<8:
@@ -77,6 +87,7 @@ class VirtualDoorManager(Frame):
             i+=1
         self.master.quit()
 
+    #Confirm existance of door with server
     def check(self, index):    
         try:
             HomeID = int(self.HomeIDs[index].get())
@@ -103,10 +114,10 @@ class VirtualDoorManager(Frame):
         SOCKET.sendto(toSend, (SERVER_ADDRESS, SERVER_PORT))
         # Wait for reponse
         response, address = SOCKET.recvfrom(RECEIVE_PORT);
-        opcode = response[0]-0x30
-        answer = response[1]-0x30
+        opcode = response[2]-0x30
+        answer = response[3]-0x30
         if opcode==0x05 and answer==0x00:
-            response = response[2:].decode('utf-8').split(';')
+            response = response[4:].decode('utf-8').split(';')
             self.HomeIDs[index].configure(state='disabled')
             self.DoorIDs[index].configure(state='disabled')
             self.Types  [index]["text"] = response[0]
