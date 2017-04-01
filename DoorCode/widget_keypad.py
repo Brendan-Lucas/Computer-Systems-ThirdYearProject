@@ -1,13 +1,13 @@
-#####################################################
+#============================================================================================
+# widget_keypad.py
+#--------------------------------------------------------------------------------------------
+# Patrick Perron
+#--------------------------------------------------------------------------------------------
 #
-#	keypad_widget.py
-#   Handles input from Keypad and Camera, and output
-#   to LCD
-#	Patrick Perron
+# Handles input from Keypad and Camera, and output to LCD
 #
-#####################################################
-
-#imports
+#============================================================================================
+# Imports
 import time
 import threading
 from tkinter import *
@@ -15,10 +15,15 @@ from winsound import *
 from tkinter.filedialog import askopenfilename
 from Door import Door
 
+#============================================================================================
+# Class Declaration
+#--------------------------------------------------------------------------------------------
 class KeypadPanel(Frame):     
+#============================================================================================
+    # Initializing Code
+    #---------------------------------------------------------------
     def __init__(self, master, door):
         Frame.__init__(self, master)
-
         self["relief"]="raised"
         self["borderwidth"]="1"
 
@@ -74,23 +79,35 @@ class KeypadPanel(Frame):
         update_thread = threading.Thread(target=self.update,args=())
         update_thread.daemon = True
         update_thread.start()
+        return
 
-    # Update Buffer with button that was pressed
+    #===============================================================
+    # buttonPressed()
+    #---------------------------------------------------------------
+    # Modify KEYPAD_BUFFER with key that was pressed
+    #---------------------------------------------------------------
     def buttonPressed(self, button):
         threading.Thread(target=PlaySound,args=('sounds/sound_keypad.wav', SND_FILENAME)).start()
         self.DOOR.DOOR_IO.KEYPAD_BUFFER = button
+        return
 
-    # Load latest LCD state from buffer
+    #===============================================================
+    # update()
+    #---------------------------------------------------------------
+    # Update GUI with results from LCD_BUFFER
+    #---------------------------------------------------------------
     def update(self):
         text = self.DOOR.DOOR_IO.LCD_BUFFER
         while True:
             # Check for Request to Take Picture
             if self.DOOR.DOOR_IO.CAMERA_BUFFER is not False:
+                # Take picture with file dialog
                 filename = askopenfilename(
                     initialdir="C:/Users/Dell/Pictures",
                     filetypes =(("JPEG File", "*.jpg;*.JPEG"),("All Files","*.*")),
                     title = "Choose an image to send."
                 )         
+                # Set Buffer
                 if filename:
                     self.DOOR.DOOR_IO.CAMERA_BUFFER = filename
                 else:
@@ -99,4 +116,6 @@ class KeypadPanel(Frame):
             if text is not self.DOOR.DOOR_IO.LCD_BUFFER: 
                 text = self.DOOR.DOOR_IO.LCD_BUFFER
                 self.LCD["text"] = text
-            time.sleep(0.25)
+            time.sleep(0.25) # Sleep for a 1/4 second
+
+#============================================================================================
