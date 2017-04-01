@@ -1,17 +1,25 @@
-#####################################################
+#============================================================================================
+# widget_doorpanel.py
+#--------------------------------------------------------------------------------------------
+# Patrick Perron
+#--------------------------------------------------------------------------------------------
 #
-#	doorpanel_widget.py
-#	Patrick Perron
+# Widget for controlling and displating the state of a door
 #
-#####################################################
-
-#imports
+#============================================================================================
+# Imports
 from tkinter import *
 from Door import Door
 from winsound import *
 import threading
 
+#============================================================================================
+# Class Declaration
+#--------------------------------------------------------------------------------------------
 class DoorPanel(Frame):
+#============================================================================================
+    # Initializing Code
+    #---------------------------------------------------------------
     def __init__(self, master, door):
         Frame.__init__(self, master)
         self.DOOR = door
@@ -31,6 +39,11 @@ class DoorPanel(Frame):
         self.panel["command"] = lambda: self.toggle()
         self.panel.grid(row=1,column=0,sticky=W+E+N+S)
 	
+    #===============================================================
+    # toggle()
+    #---------------------------------------------------------------
+    # Modify the state of the door if door is unlocked
+    #---------------------------------------------------------------
     def toggle(self):
         #Toggle only if door is not locked
         if self.DOOR.DOOR_IO.LOCK_BUFFER is False:
@@ -46,6 +59,8 @@ class DoorPanel(Frame):
             threading.Thread(target=PlaySound,args=('sounds/sound_open.wav', SND_FILENAME)).start()
         else:
             threading.Thread(target=PlaySound,args=('sounds/sound_blocked.wav', SND_FILENAME)).start()
+
+#============================================================================================
    
 		
 		
