@@ -1,1 +1,1 @@
-Images used in GUI stored here
+Images used in GUI stored in this folder
