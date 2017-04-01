@@ -1,11 +1,13 @@
-#####################################################
+#============================================================================================
+# widget_virtualdoor.py
+#--------------------------------------------------------------------------------------------
+# Patrick Perron
+#--------------------------------------------------------------------------------------------
 #
-#	GUI.py
-#	Patrick Perron
+# Single moudle containing all widgets for a virtual door
 #
-#####################################################
-
-#imports
+#============================================================================================
+# Imports
 import threading
 from tkinter import *
 from Door import Door
@@ -14,21 +16,27 @@ from widget_doorpanel import DoorPanel
 from widget_lockpanel import LockPanel
 from widget_infopanel import InfoPanel
 
-class VirtualDoorPanel(Frame):	
+#============================================================================================
+# Class Declaration
+#--------------------------------------------------------------------------------------------
+class VirtualDoorPanel(Frame):  
+#============================================================================================
+    # Initializing Code
+    #---------------------------------------------------------------
     def __init__(self, master, info):
         Frame.__init__(self, master)
-
         self["relief"] = "raised"
         self["borderwidth"] = "2"
-        self.DOOR = Door(info[0], info[1])
+        self.DOOR = Door(info[0], info[1], info[2])
         # Run Door Thread in background
         door_thread = threading.Thread(target=self.DOOR.runVirtual,args=())
         door_thread.daemon = True
         door_thread.start()
-
+        
+        # Initialize widgets
         self.grid()   
         # Info Panel
-        self.infoPanel = InfoPanel(self, self.DOOR)
+        self.infoPanel = InfoPanel(self, self.DOOR, info[2:])
         self.infoPanel.grid(row=0,column=0,sticky=W+E+N+S)
         # Door Panel
         self.doorpanel = DoorPanel(self, self.DOOR)
@@ -40,3 +48,4 @@ class VirtualDoorPanel(Frame):
         self.keypadPanel = KeypadPanel(self, self.DOOR)
         self.keypadPanel.grid(row=3,column=0,sticky=W+E+N+S)
 
+#============================================================================================
