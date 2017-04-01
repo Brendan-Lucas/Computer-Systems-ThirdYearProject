@@ -10,5 +10,9 @@ To run a door on hardware:
 
 To run a door virtually:
   python runVirtual_DEMO.py
-
+  
+  
+Virtual Door Info:
+  -Download all images and sounds
+  -run on windows operating system with python3 installed
 =====================================================
