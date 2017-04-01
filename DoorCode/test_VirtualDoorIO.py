@@ -1,29 +1,39 @@
-#===============================================================
+#============================================================================================
 # test_VirtualDoorIO.py
-#---------------------------------------------------------------
-# Test class for Virtual DoorIO Module
-#===============================================================
-#imports
+#--------------------------------------------------------------------------------------------
+# Patrick Perron
+#--------------------------------------------------------------------------------------------
+#
+# Testing Module for DoorIO.py using testing.py
+# Run standalone by passing -s option
+#
+#============================================================================================
+# Imports
 import time
 import sys
 from testing import testUnit
 from DoorIO import VirtualDoorIO
 
-###################################
+#============================================================================================
+# Run Local Tests
+#--------------------------------------------------------------------------------------------
 def main():
-    ###################################
     # Initialize
-    T_UNIT = testUnit("Virtual Door IO")
+    global T_UNIT
+    T_UNIT = testUnit("VirtualDoorIO") 
     T_UNIT.start()
-    ###################################
-    #Tests
+    # Run tests
     for test in get_tests():
-        T_UNIT.eval_test_case(test,None)
+        T_UNIT.eval_test_case( test, None )
     
-    ###################################
-    # Display
+    # Display Results
     T_UNIT.finish()
 
+#============================================================================================
+# get_tests()
+#--------------------------------------------------------------------------------------------
+# Return list of tests in suite
+#--------------------------------------------------------------------------------------------
 def get_tests():
     tests=[]
     tests.append(test_setLocked_TRUE)
@@ -41,12 +51,10 @@ def get_tests():
     tests.append(test_playSound)
     return tests
 
-###################################
+
+#============================================================================================
 # Tests
-#======================================================================
-# setLocked()
-#----------------------------------------------------------------------
-# Test setLocked() if door initally locked
+#--------------------------------------------------------------------------------------------
 def test_setLocked_TRUE(T_UNIT):
     IO = VirtualDoorIO()
     IO.LOCK_BUFFER = True
@@ -54,8 +62,9 @@ def test_setLocked_TRUE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#----------------------------------------------------------------------
-# Test setLocked() if door initally locked
+#============================================================================================
+# Tests
+#--------------------------------------------------------------------------------------------
 def test_setLocked_FALSE(T_UNIT):
     IO = VirtualDoorIO()
     IO.LOCK_BUFFER = False
@@ -63,9 +72,7 @@ def test_setLocked_FALSE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#======================================================================
-# setUnlocked()
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test setUnlocked() if door initally locked
 def test_setUnlocked_TRUE(T_UNIT):
     IO = VirtualDoorIO()
@@ -74,7 +81,7 @@ def test_setUnlocked_TRUE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test setUnlocked() if door initally unlocked
 def test_setUnlocked_FALSE(T_UNIT):
     IO = VirtualDoorIO()
@@ -83,9 +90,7 @@ def test_setUnlocked_FALSE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#======================================================================
-# isLocked()
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test isLocked() if door initally locked
 def test_isLocked_TRUE(T_UNIT):
     IO = VirtualDoorIO()
@@ -94,7 +99,7 @@ def test_isLocked_TRUE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test isLocked() if door initally unlocked
 def test_isLocked_FALSE(T_UNIT):
     IO = VirtualDoorIO()
@@ -103,9 +108,7 @@ def test_isLocked_FALSE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#======================================================================
-# isOpen()
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test isOpen() if door initally open
 def test_isOpen_TRUE(T_UNIT):
     IO = VirtualDoorIO()
@@ -114,7 +117,7 @@ def test_isOpen_TRUE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test isOpen() if door initally closed
 def test_isOpen_FALSE(T_UNIT):
     IO = VirtualDoorIO()
@@ -123,9 +126,7 @@ def test_isOpen_FALSE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#======================================================================
-# isKeyPressed()
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test isKeyPressed() if 1 key is pressed
 def test_isKeyPressed_TRUE(T_UNIT):
     IO = VirtualDoorIO()
@@ -134,7 +135,7 @@ def test_isKeyPressed_TRUE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
 
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test isKeyPressed() no key is pressed
 def test_isKeyPressed_FALSE(T_UNIT):
     IO = VirtualDoorIO()
@@ -142,9 +143,7 @@ def test_isKeyPressed_FALSE(T_UNIT):
         return T_UNIT.PASS  
     return T_UNIT.FAIL
     
-#======================================================================
-# displayLCD()
-#----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 # Test displayLCD() if LCD has text
 def test_displayLCD_TEXT(T_UNIT):
     IO = VirtualDoorIO()
@@ -152,7 +151,8 @@ def test_displayLCD_TEXT(T_UNIT):
     if IO.LCD_BUFFER == 'HELLO WORLD!':
         return T_UNIT.PASS  
     return T_UNIT.FAIL
-#----------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------
 # Test displayLCD() if LCD is clear
 def test_displayLCD_CLEAR(T_UNIT):
     IO = VirtualDoorIO()
@@ -160,9 +160,8 @@ def test_displayLCD_CLEAR(T_UNIT):
     if IO.LCD_BUFFER == '':
         return T_UNIT.PASS  
     return T_UNIT.FAIL
-#======================================================================
-# playSuund()
-#----------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------
 # Test is sound is played
 def test_playSound(T_UNIT):
     IO = VirtualDoorIO()
@@ -170,6 +169,9 @@ def test_playSound(T_UNIT):
     if IO.SOUND_BUFFER == 'sounds/sound_blocked.wav':
         return T_UNIT.PASS  
     return T_UNIT.FAIL
-###################################
 
+#============================================================================================
+# Run Standalone
+#--------------------------------------------------------------------------------------------
 if len(sys.argv) > 1 and sys.argv[1] == "-s": main()
+#============================================================================================
