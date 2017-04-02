@@ -2,14 +2,24 @@ package Server;
 import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class Server extends Thread{
   private static String passcode = "1324";
@@ -82,9 +92,21 @@ public class Server extends Thread{
 
   	public void run() {
   		byte[] msg = packet.getData();
-      //TODO: brendan Check the first two bits to decide the type where is msg is coming from
-  		//house number
+  		//TODO: brendan Check the first two bits to decide the type where is msg is coming from
+  		Houses houses = null;
+  		List<Door> doors;
+  		List<User> users; 		
+  		ObjectMapper objectMapper = new ObjectMapper();
+  		
+  		try {
+				houses = objectMapper.readValue(new File("database.json"), Houses.class);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+  		//Check Valid House Number
   		//TODO:check Database for those house numbers
+  		
+  		
   		//door number.
   		//TODO:check Database for that door number at that house numberl.
   		//System.out.println("CONTROL: Control thread running, scanning packet"+ Arrays.toString(msg));

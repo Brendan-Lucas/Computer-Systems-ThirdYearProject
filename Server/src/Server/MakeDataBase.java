@@ -1,6 +1,8 @@
 package Server;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,42 +24,57 @@ public class MakeDataBase{
 
       ObjectMapper objMapper = new ObjectMapper();
 
-      JsonGenerator jsonGenerator=null;
-			try {
-				jsonGenerator = new JsonFactory().createGenerator(new FileOutputStream("database.txt"));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-      jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter());
-      jsonGenerator.writeStartObject();
-      jsonGenerator.writeArrayFieldStart("Houses");//StartHouses
-        jsonGenerator.writeStartObject("House");//StartHouse
-          jsonGenerator.writeArrayFieldStart("Doors");//StartDoors
-            jsonGenerator.writeStartObject("Door");//StartDoor
-              jsonGenerator.writeArrayFieldStart("Requests");
-              jsonGenerator.writeEndArray();
-              jsonGenerator.writeBooleanField("State", false);
-            jsonGenerator.writeEndObject();//endDoor
-            //moreDoorsGoHere
-          jsonGenerator.writeEndArray();//EndDoors
-          jsonGenerator.writeStringField("Passcode", "1324");
-          jsonGenerator.writeArrayFieldStart("Users");//StartUsers
-            jsonGenerator.writeStartObject("User");//StartUser1
-              jsonGenerator.writeStringField("Username", "blucas");
-              jsonGenerator.writeStringField("Password", "Phantom1");
-            jsonGenerator.writeEndObject();//endUser1
-            //more users go here.
-          jsonGenerator.writeEndArray();//EndUsers
-        jsonGenerator.writeEndObject();//EndHose
-        //moreHousesGoHere
-      jsonGenerator.writeEndArray();//EndHouses
-      //End Route Object
-      jsonGenerator.writeEndObject();
-
-      jsonGenerator.flush();
-      jsonGenerator.close();
+//      JsonGenerator jsonGenerator=null;
+//			try {
+//				jsonGenerator = new JsonFactory().createGenerator(new FileOutputStream("database.json"));
+//			} catch (FileNotFoundException e) {
+//				e.printStackTrace();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+			
+			File database = new File("database.json");
+			Door door1 = new Door();
+			ArrayList<Door> doors = new ArrayList<Door>();
+			doors.add(door1);
+			
+			User blucas = new User("blucas", "Phantom1");
+			ArrayList<User> users= new ArrayList<User>();
+			users.add(blucas);
+			House house1 = new House(doors, users);
+			
+			ArrayList<House> houseList = new ArrayList<House>();
+			houseList.add(house1);
+			Houses houses = new Houses(houseList);
+			objMapper.writeValue(database, houses);
+			
+//      jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter());
+//      jsonGenerator.writeStartObject();
+//      jsonGenerator.writeArrayFieldStart("Houses");//StartHouses
+//        jsonGenerator.writeStartObject("House");//StartHouse
+//          jsonGenerator.writeArrayFieldStart("Doors");//StartDoors
+//            jsonGenerator.writeStartObject("Door");//StartDoor
+//              jsonGenerator.writeArrayFieldStart("Requests");
+//              jsonGenerator.writeEndArray();
+//              jsonGenerator.writeBooleanField("State", false);
+//            jsonGenerator.writeEndObject();//endDoor
+//            //moreDoorsGoHere
+//          jsonGenerator.writeEndArray();//EndDoors
+//          jsonGenerator.writeStringField("Passcode", "1324");
+//          jsonGenerator.writeArrayFieldStart("Users");//StartUsers
+//            jsonGenerator.writeStartObject("User");//StartUser1
+//              jsonGenerator.writeStringField("Username", "blucas");
+//              jsonGenerator.writeStringField("Password", "Phantom1");
+//            jsonGenerator.writeEndObject();//endUser1
+//            //more users go here.
+//          jsonGenerator.writeEndArray();//EndUsers
+//        jsonGenerator.writeEndObject();//EndHose
+//        //moreHousesGoHere
+//      jsonGenerator.writeEndArray();//EndHouses
+//      //End Route Object
+//      jsonGenerator.writeEndObject();
+//
+//      jsonGenerator.flush();
+//      jsonGenerator.close();
   }
 }
