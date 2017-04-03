@@ -5,7 +5,7 @@ JSON compatablility with java is strong and so the object model will make it ver
 
 We will have our database be local to servers, so there will be for this prototype one database that grows out in this context:
 {
-  "Houses" : {[
+  "Houses" : {
       "Doors" : {
         "requests" : {
           "PASS_MSG" : MessageObject[],
@@ -20,8 +20,8 @@ We will have our database be local to servers, so there will be for this prototy
       "Users" : {
         "Username" : String,
         "Password" : String,
-
+        
       }
-  ]
+
   }
 }

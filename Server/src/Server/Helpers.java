@@ -1,4 +1,4 @@
-
+package Server;
 public class Helpers {
 
 	public static int packetLength = 516;
