@@ -1,5 +1,6 @@
 package Server;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,15 @@ public class House {
 	public House(){
 		this(new ArrayList<Door>(), new ArrayList<User>());
 	}
-
+	
+	public House(String passcode){
+		this(new ArrayList<Door>(), passcode);
+	}
+	
+	public House(ArrayList<Door> doors, String passcode){
+		this(doors, new ArrayList<User>(), passcode);
+	}
+	
 	public House(ArrayList<Door> doors, ArrayList<User> users){
 		this(doors, users, "1324");
 	}
@@ -37,7 +46,11 @@ public class House {
 	}
 
 	public void addDoor(){
-		this.doors.add(new Door());
+		try {
+			this.doors.add(new Door());
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public List<Door> getDoors(){

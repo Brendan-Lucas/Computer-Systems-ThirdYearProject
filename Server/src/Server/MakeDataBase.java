@@ -23,17 +23,31 @@ public class MakeDataBase{
       ObjectMapper objMapper = new ObjectMapper();
 
 			File database = new File("database.json");
-			Door door1 = new Door();
+			Door door1 = new Door(false, "10.0.0.20");
 			ArrayList<Door> doors = new ArrayList<Door>();
 			doors.add(door1);
-
+			doors.add(new Door());
+			
 			User blucas = new User("blucas", "Phantom1");
 			ArrayList<User> users= new ArrayList<User>();
 			users.add(blucas);
-			House house1 = new House(doors, users);
+			House house1 = new House(doors, users, "1326");
+			ArrayList<Door> otherDoors = new ArrayList<>();
+			otherDoors.add(new Door());
+			House house5 = new House(otherDoors, "CC34");
+			doors.add(door1);
+			House house3 = new House(doors, "A55B");
+			
+			
+			
+			
 
-			ArrayList<House> houseList = new ArrayList<House>();
-			houseList.add(house1);
+			ArrayList<House> houseList = new ArrayList<House>(16);
+			for(int i=0; i<16; i++) houseList.add(null);
+			houseList.set(0, house1);
+			houseList.set(2, house3);
+			houseList.set(4, house5);
+			
 			Houses houses = new Houses(houseList);
 			objMapper.writeValue(database, houses);
   }
