@@ -14,7 +14,15 @@ public class House {
 	public House(){
 		this(new ArrayList<Door>(), new ArrayList<User>());
 	}
-
+	
+	public House(String passcode){
+		this(new ArrayList<Door>(), passcode);
+	}
+	
+	public House(ArrayList<Door> doors, String passcode){
+		this(doors, new ArrayList<User>(), passcode);
+	}
+	
 	public House(ArrayList<Door> doors, ArrayList<User> users){
 		this(doors, users, "1324");
 	}

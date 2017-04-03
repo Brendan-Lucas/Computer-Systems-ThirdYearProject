@@ -6,11 +6,13 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 public class Door {
+	
+	private final static String DEFAULT_ADDRESS = "10.0.0.20";
 	private boolean state;
 	private List<String> requests;
 	private InetAddress address; 
 	public Door() throws UnknownHostException{
-		this(false, InetAddress.getLocalHost());
+		this(false, DEFAULT_ADDRESS);
 	}
 	
 	public Door(boolean state, String address) throws UnknownHostException{
