@@ -2,10 +2,7 @@ package Server;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 import Server.House;
-import Server.Door;
-import Server.User;
 public class Houses{
 
 	private ArrayList<House> houses;
