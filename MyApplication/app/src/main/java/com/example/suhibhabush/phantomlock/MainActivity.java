@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity
     public List<String> eventArrayList;
     public boolean currentDoorState;
     public ArrayAdapter<String> adapter;
-
+    private DatagramPacket sendPacket, receivePacket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -89,8 +89,6 @@ public class MainActivity extends AppCompatActivity
 
 
         Button btnLock = (Button) findViewById(R.id.btnLock);
-
-        final DatagramSocket finalSocket = socket;
         btnLock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,25 +98,32 @@ public class MainActivity extends AppCompatActivity
                 sendMsg[1] = doornumber;
                 sendMsg[2] = LK_MSG;
 
-                DatagramPacket sendPacket;
-                DatagramPacket receivePacket;
+
                 receivePacket = new DatagramPacket(recMsg, recMsg.length);
+                sendPacket = new DatagramPacket(sendMsg, sendMsg.length, hostAddress, portnumber);
+
                 try {
-                    sendPacket = new DatagramPacket(sendMsg, sendMsg.length, hostAddress, portnumber);
-                    finalSocket.send(sendPacket);
-                    finalSocket.receive(receivePacket);
-                    byte[] receiveMsg = receivePacket.getData();
-                    currentDoorState = (receiveMsg[3]==UNLOCK);
-                    updateDoorStatus(currentDoorState);
-                    int doorNum = doornumber;
-                    eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
-                    adapter.notifyDataSetChanged();
-                } catch (Exception e) {
+                    socket.send(sendPacket);
+                } catch (IOException e) {
                     e.printStackTrace();
-                    int doorNum = doornumber;
-                    eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
-                    adapter.notifyDataSetChanged();
                 }
+
+                try {
+                    socket.receive(receivePacket);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                byte[] receiveMsg = receivePacket.getData();
+                currentDoorState = (receiveMsg[3]==UNLOCK);
+                updateDoorStatus(currentDoorState);
+                int doorNum = doornumber;
+                eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
+                adapter.notifyDataSetChanged();
+
+
+                //    int doorNum = doornumber;
+                //   eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
+                //  adapter.notifyDataSetChanged();
 
             }
         });
@@ -166,13 +171,17 @@ public class MainActivity extends AppCompatActivity
 
 
     private class ControlThread extends Thread {
-        private DatagramSocket socket;
+        private DatagramSocket sendReceive;
         private MainActivity mainActivity;
         public boolean statusObtainedByThread;
         public ControlThread (MainActivity mainActivity)
         {
             this.mainActivity = mainActivity;
-            this.socket = mainActivity.socket;
+            try {
+                this.sendReceive = new DatagramSocket();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
         }
 
         public void run() {
