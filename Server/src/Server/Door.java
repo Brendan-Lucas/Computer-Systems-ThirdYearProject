@@ -1,18 +1,26 @@
 package Server;
 
 import java.util.List;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 public class Door {
 	private boolean state;
 	private List<String> requests;
-	
-	public Door(){
-		this(false);
+	private InetAddress address; 
+	public Door() throws UnknownHostException{
+		this(false, InetAddress.getLocalHost());
 	}
-	public Door(boolean state){
+	
+	public Door(boolean state, String address) throws UnknownHostException{
+		this(state, InetAddress.getByName(address)); 
+	}
+	
+	public Door(boolean state, InetAddress address){
 		this.state = state;
 		this.requests = new ArrayList<String>();
+		this.address = address;
 	}
 	
 	public void addRequest(String request){
@@ -29,5 +37,9 @@ public class Door {
 	
 	public boolean getState(){
 		return this.state;
+	}
+	
+	public InetAddress getAddress(){
+		return this.address;
 	}
 }

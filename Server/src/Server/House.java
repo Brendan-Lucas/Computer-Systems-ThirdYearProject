@@ -1,5 +1,6 @@
 package Server;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +38,11 @@ public class House {
 	}
 
 	public void addDoor(){
-		this.doors.add(new Door());
+		try {
+			this.doors.add(new Door());
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public List<Door> getDoors(){
