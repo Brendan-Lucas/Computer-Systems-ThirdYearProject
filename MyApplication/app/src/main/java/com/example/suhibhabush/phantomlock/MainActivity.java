@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private DatagramPacket runUdpClient(byte msg)  {
-        byte[] udpMsg = {(byte)housenumber, (byte)doornumber, msg};
+        byte[] udpMsg = {(byte)housenumber, (byte)doornumber, msg, UNLOCK};
         DatagramSocket ds = null;
         try {
             ds = new DatagramSocket();
@@ -172,12 +172,7 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (ds != null) {
-                ds.close();
-            }
         }
-
         DatagramPacket incomingPacket = new DatagramPacket(new byte[100], 100);
         try {
             ds.setSoTimeout(1000);
@@ -188,6 +183,8 @@ public class MainActivity extends AppCompatActivity
             ds.receive(incomingPacket);
         } catch (IOException e){
             e.printStackTrace();
+        }finally{
+            if(ds != null) ds.close();
         }
         return incomingPacket;
     }
