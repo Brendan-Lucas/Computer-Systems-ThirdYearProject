@@ -237,8 +237,7 @@ public class Server extends Thread{
   					}
   					if(full!= null){
   						full = Helpers.concat(full, data);
-  					} else {
-  						System.out.println("LALALALALAL"); 
+  					} else { 
   						full = data;
   	    			}
   					lastPacket++;
