@@ -75,6 +75,10 @@ public class Server extends Thread{
     final byte UNLOCK = (byte) 0xFF;
     final byte LOCK = 0x00;
     final byte ACK = 0x04;
+    
+    final byte ACCEPT = (byte)0x00;
+    final byte REJECT = (byte)0xFF;
+    
     final byte PASS_MSG = 0;
     final byte IMG_MSG = 1;
     final byte D_STAT_MSG = 2;
@@ -89,8 +93,8 @@ public class Server extends Thread{
   		} catch (SocketException e) {
   			e.printStackTrace();
   		}
-      this.houseNum = this.packet.getData()[0]-1;
-      this.houseNum = this.packet.getData()[1]-1;
+  		this.houseNum = this.packet.getData()[0]-1;
+  		this.doorNum = this.packet.getData()[1]-1;
   		System.out.println("CONTROL: new control thread");
     }
 
@@ -167,10 +171,10 @@ public class Server extends Thread{
 
       if(house.checkPasscode(new String(passcode))){
       	System.out.println("CONTROL: unlock building");
-      	buildResponse(UNLOCK, msg, 4);
+      	buildResponse(ACCEPT, msg, 4);
       } else{
         System.out.println("CONTROL: lock building");
-      	buildResponse(LOCK, msg, 4);
+      	buildResponse(REJECT, msg, 4);
       }
       
       try {
