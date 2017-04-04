@@ -72,13 +72,9 @@ public class Server extends Thread{
     private DatagramPacket responsePacket;
     private DatagramPacket packet;
     private DatagramSocket sendReceiveSocket;
-    final byte UNLOCK = (byte) 0xFF;
-    final byte LOCK = 0x00;
     final byte ACK = 0x04;
-    
     final byte ACCEPT = (byte)0x00;
     final byte REJECT = (byte)0xFF;
-    
     final byte PASS_MSG = 0;
     final byte IMG_MSG = 1;
     final byte D_STAT_MSG = 2;
@@ -207,9 +203,9 @@ public class Server extends Thread{
 				e.printStackTrace();
 			}
       //begin receive send cycle
-      final int NOT_FOUND = -1;
+      final int NOT_FOUND = 0;
       int index = NOT_FOUND;
-    	while (index <= 3){
+    	while (index < 5){
 
 	    	System.out.println("CONTROL: waiting to recieve image ");
 	    	receiveBuff = new byte[Helpers.packetLength];
@@ -238,14 +234,19 @@ public class Server extends Thread{
   							index = NOT_FOUND;
   						}
 
-            }
-  					full = full!= null? Helpers.concat(full, data) : data;
-            lastPacket++;
+  					}
+  					if(full!= null){
+  						full = Helpers.concat(full, data);
+  					} else {
+  						System.out.println("LALALALALAL"); 
+  						full = data;
+  	    			}
+  					lastPacket++;
   					//build ack
-            ack[2] = receiveBuff[2];
-            ack[3] = receiveBuff[3];
-            System.out.println("CONTROL: Sending Ack: " + ack[2] + " , " + ack[3]);
-            ackPacket = new DatagramPacket(ack, ack.length, clientAddress, clientPort);
+  					ack[2] = receiveBuff[2];
+  					ack[3] = receiveBuff[3];
+  					System.out.println("CONTROL: Sending Ack: " + ack[2] + " , " + ack[3]);
+  					ackPacket = new DatagramPacket(ack, ack.length, clientAddress, clientPort);
           } else System.out.println("CONTROL: resending old ack:");
           try {
 						sendReceiveSocket.send(ackPacket);
@@ -255,14 +256,21 @@ public class Server extends Thread{
     	  }
       }
       System.out.println("CONTROL: Received Entire image in bytes. Formatting to image.");
+
     	BufferedImage img = null;
-    	try {
-				img = ImageIO.read(new ByteArrayInputStream(full));
+      	try {
+			img = ImageIO.read(new ByteArrayInputStream(full));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-    	displayImage(img);
-
+        try {
+            FileOutputStream fos = new FileOutputStream("output.jpg");
+            fos.write(full);
+            fos.close();
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+         //displayImage(img);
     }
 
 
