@@ -26,13 +26,13 @@ public class MakeDataBase{
 			
 			// Initialize with null doors
 			ArrayList<House> houseList = new ArrayList<House>(16);
-			doors.add(new Door(false, "10.0.0.20"));
+			ArrayList<Door> doors = new ArrayList<Door>();
 			ArrayList<User> users= new ArrayList<User>();
 			users.add(new User("JJohnson", "Phantom1"));
 			House house = new House(doors, users, "1326");
 			
 			// Home 1
-			ArrayList<Door> doors = new ArrayList<Door>();
+			doors.add(new Door(false, "10.0.0.20"));
 			doors.add(new Door(false, "10.0.0.20"));
 			houseList.add(house);
 			
