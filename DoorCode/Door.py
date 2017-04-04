@@ -192,36 +192,36 @@ class Door:
         # Handle Picture Transfer Operation    
         else:
             # Check Specialized OpCode Format for picture transfer
-            if message[0]==PIC_ACK_OPCODE[0] and message[1]==PIC_ACK_OPCODE[1] and message[2]==PIC_ACK_OPCODE[2] and message[3]==PIC_ACK_OPCODE[3]:
-                if self.picToSend != None:
-                    if self.picPacketCount is None: #reset picPacketCount for new request
-                        self.picPacketCount = 0
-                    # Generate Transfer Opcode
-                    toSend = bytearray()
-                    toSend.append(PIC_ACK_OPCODE[0])
-                    toSend.append(PIC_ACK_OPCODE[1])
-                    toSend.append((self.picPacketCount//256)&0xFF) # Seperate packetCount into 2 Bytes
-                    toSend.append((self.picPacketCount %256)&0xFF)
-                    # Send next 1024 bytes
-                    if len(self.picToSend) >= 1024:
-                        for i in range(0,1024):
-                            toSend.append(self.picToSend[i])
-                        self.picToSend = self.picToSend[1024:]
-                    # Send rest of photo
-                    else:
-                        # Fill rest of photo
-                        for i in range(0,len(self.picToSend)):
-                            toSend.append(self.picToSend[i])
-                        # Append with zeroes
-                        for i in range(0,1024-len(self.picToSend)):
-                            toSend.append(0x00)
-                        self.picToSend = None
-                        self.picPacketCount = None
-                        self.SERVER_IO.send_address(toSend, address[0], address[1])
-                        return
+            if message[0]==PIC_ACK_OPCODE[0] and message[1]==PIC_ACK_OPCODE[1] and self.picToSend is not None:# and message[2]==PIC_ACK_OPCODE[2] and message[3]==PIC_ACK_OPCODE[3]:
+                if self.picPacketCount is None: #reset picPacketCount for new request
+                    self.picPacketCount = 1
+                # Generate Transfer Opcode
+                toSend = bytearray()
+                toSend.append(PIC_TRANS_OPCODE[0])
+                toSend.append(PIC_TRANS_OPCODE[1])
+                toSend.append((self.picPacketCount//256)&0xFF) # Seperate packetCount into 2 Bytes
+                toSend.append((self.picPacketCount %256)&0xFF)
+                # Send next 1024 bytes
+                if len(self.picToSend) > 1024:
+                    for i in range(0,1024):
+                        toSend.append(self.picToSend[i]&0xFF)
                     self.SERVER_IO.send_address(toSend, address[0], address[1])
+                    
+                    self.picToSend = self.picToSend[1024:] #cut sent bits from packet
                     self.picPacketCount+=1
-                    return  
+                    return
+                # Send rest of photo
+                else:
+                    # Fill with rest of photo
+                    for i in range(0,len(self.picToSend)):
+                        toSend.append(self.picToSend[i]&0xFF)
+                    for i in range(0,5): toSend.append(0x00)
+                    self.SERVER_IO.send_address(toSend, address[0], address[1])
+                    # Reset
+                    self.picPacketCount=None                        
+                    self.picToSend = None
+                    return
+                return  
 
     #===============================================================
     # pollDoorThread()

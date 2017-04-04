@@ -128,10 +128,11 @@ class VirtualDoorIO():
         picture = picture.crop((420, 0, 1500, 1080)) # Cut to square image
         picture = picture.resize((PIC_SIZE, PIC_SIZE), PIL.Image.ANTIALIAS)
         picture.save(PIC_NAME)
-        # Convert to Bytes
+
         with open(PIC_NAME, "rb") as imageFile:
             f = imageFile.read()
             picByteArr = bytearray(f) 
+        
         # Reset buffer and return byte array
         self.CAMERA_BUFFER = False
         return picByteArr
