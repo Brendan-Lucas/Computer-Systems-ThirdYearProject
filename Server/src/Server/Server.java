@@ -274,8 +274,11 @@ public class Server extends Thread{
       }
     }
 
-    private void lockDoorMessage(byte[] msg){
-      return;
+    private void lockDoorMessage(Door door, byte[] msg){
+    	
+    	door.getAddress();
+    	//TODO: made alternate build responses, pick up when get back 
+    
     }
 
     private void respondWithDoorInfo(Door door, byte[] msg){
@@ -288,14 +291,19 @@ public class Server extends Thread{
 				e.printStackTrace();
 			}
     }
-  
+    //TODO: implement door port differences
     private void buildResponse(byte key, byte[] msg, int length){
-      byte[] responseMsg = new byte[length];
+    	buildResponse(key, msg, length, this.packet.getAddress());
+    }
+    
+    private void buildResponse(byte key, byte[] msg, int length, InetAddress address){
+    	byte[] responseMsg = new byte[length];
       responseMsg[0] = msg[0];
       responseMsg[1] = msg[1];
       responseMsg[2] = msg[2];
       responseMsg[3] = key;
-      responsePacket = new DatagramPacket(responseMsg, responseMsg.length, this.packet.getAddress(), this.packet.getPort());
+      //TODO: implement door diffs here;;;;
+      responsePacket = new DatagramPacket(responseMsg, responseMsg.length, address, this.packet.getPort());
     }
     
     public void displayImage(BufferedImage img){
