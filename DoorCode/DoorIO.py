@@ -15,8 +15,13 @@
 # Imports
 import time
 import io
-import RPi.GPIO as GPIO
-from picamera import PiCamera
+
+try:
+    import RPi.GPIO as GPIO
+    from picamera import PiCamera
+except:
+    print("Running Virtual")
+
 import PIL
 from PIL import Image
 
