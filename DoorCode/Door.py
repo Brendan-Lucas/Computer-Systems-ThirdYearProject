@@ -166,7 +166,7 @@ class Door:
             elif opcode == PIC_OPCODE: 
                 status       = message[3]
                 requestDelay = 1 
-                if message[3] == ACCEPTED:
+                if status == ACCEPTED:
                     self.printLCD("REQUEST ACCEPTED")
                     # Unlock Door
                     if self.DOOR_IO.isLocked() is True and self.DOOR_IO.isOpen() is False:
