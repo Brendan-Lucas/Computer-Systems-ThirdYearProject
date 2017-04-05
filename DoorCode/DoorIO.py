@@ -15,6 +15,8 @@
 # Imports
 import time
 import io
+import RPi.GPIO as GPIO
+from picamera import PiCamera
 import PIL
 from PIL import Image
 
