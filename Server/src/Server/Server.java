@@ -80,6 +80,7 @@ public class Server extends Thread{
     final byte D_STAT_MSG = 2;
     final byte LK_MSG = 3;
     final byte GET_DOR = (byte) 0xFF;
+    final int minPacketLength = 4;
     int houseNum;
     int doorNum;
     public ControlThread(DatagramPacket packet){
@@ -137,9 +138,9 @@ public class Server extends Thread{
 	  			doorStateMessage(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
 	  			storeRequest(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
 	  		}else if (msg[2] == LK_MSG){
-	
-	  			lockDoorMessage(msg);
-	
+	  			Door door = houses.getHouses().get(houseNum).getDoors().get(doorNum);
+	  			lockDoorMessage(door, msg);
+	  			storeRequest(door, msg);
 	  		}else if (msg[2] == GET_DOR){
 	
 	  			respondWithDoorInfo(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
@@ -276,8 +277,20 @@ public class Server extends Thread{
 
     private void lockDoorMessage(Door door, byte[] msg){
     	
-    	door.getAddress();
-    	//TODO: made alternate build responses, pick up when get back 
+    		buildResponse(msg[3], msg, minPacketLength, door.getAddress());
+    		
+    		try {
+					sendReceiveSocket.send(responsePacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+    		
+    		buildResponse((byte)0x00, msg, minPacketLength);
+    		try {
+    			sendReceiveSocket.send(responsePacket);
+    		} catch (IOException e){
+    			e.printStackTrace();
+    		}
     
     }
 
