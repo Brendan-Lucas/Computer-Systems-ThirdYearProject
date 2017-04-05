@@ -16,14 +16,18 @@ import java.net.*;
 import java.security.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 import android.os.AsyncTask;
 
 public class MainActivity extends AppCompatActivity
 {
     //TODO: Add image request, add multiple doors
-    private String hostName = "local";
+    //private String hostName = "99.248.222.229";
+    private String hostName = "10.0.2.2";
     private InetAddress hostAddress;
     //TODO: external ip address of the pi or internal if we doing it thru the local network
     private static final int portnumber = 1400;
@@ -44,10 +48,11 @@ public class MainActivity extends AppCompatActivity
     public boolean currentDoorState;
     public ArrayAdapter<String> adapter;
     private DatagramPacket sendPacket, receivePacket;
-
+    private runUdpClient sendReceiveTask;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+
         CreateAddress addressGetter = new CreateAddress();
         try {
             hostAddress = addressGetter.execute(hostName).get();
@@ -65,22 +70,13 @@ public class MainActivity extends AppCompatActivity
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, eventArrayList);
         listView.setAdapter(adapter);
 
-        try
-        {
-            //Connecting
-            eventArrayList.add(0, (getCurrentTimeStamp() + "App Launched."));
-            Log.i(debugString, "Attempting to connect  to server");
-            socket = new DatagramSocket();
-            Log.i(debugString, "Connection established");
 
-            //initialize text view with doorstatus
-            //updateDoorStatus(requestDoorStatus());
-        }
-        catch (IOException e)
-        {
-            Log.e(debugString, e.getMessage());
-            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+
+        //Connecting
+        eventArrayList.add(0, (getCurrentTimeStamp() + "App Launched."));
+        //initialize text view with doorstatus
+        //updateDoorStatus(requestDoorStatus());
+
 
 
 
@@ -88,24 +84,25 @@ public class MainActivity extends AppCompatActivity
         btnLock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                DatagramPacket receivePacket = runUdpClient(LK_MSG);
-
+                sendReceiveTask = new runUdpClient();
+                byte[] udpMsg = {(byte)housenumber, (byte)doornumber, LK_MSG, UNLOCK};
+                System.out.println(hostAddress);
+                sendPacket = new DatagramPacket(udpMsg, udpMsg.length, hostAddress, portnumber);
+                DatagramPacket receivePacket = null;
                 try {
-                    socket.receive(receivePacket);
-                } catch (IOException e) {
+                    receivePacket = sendReceiveTask.execute(sendPacket).get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                byte[] receiveMsg = receivePacket.getData();
-                currentDoorState = (receiveMsg[3]==UNLOCK);
+
+
+                currentDoorState = (receivePacket.getData()[3]==UNLOCK);
                 updateDoorStatus(currentDoorState);
                 int doorNum = doornumber;
                 eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
                 adapter.notifyDataSetChanged();
-
-                //    int doorNum = doornumber;
-                //   eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
-                //  adapter.notifyDataSetChanged();
 
             }
         });
@@ -154,39 +151,46 @@ public class MainActivity extends AppCompatActivity
 
 
 
-    private DatagramPacket runUdpClient(byte msg)  {
-        byte[] udpMsg = {(byte)housenumber, (byte)doornumber, msg, UNLOCK};
-        DatagramSocket ds = null;
-        try {
-            ds = new DatagramSocket();
-            InetAddress serverAddr = InetAddress.getByName("127.0.0.1");
-            DatagramPacket dp;
-            //dp = new DatagramPacket(udpMsg.getBytes(), udpMsg.length(), hostAddress, portnumber);
-            dp = new DatagramPacket(udpMsg, udpMsg.length, serverAddr, portnumber);
-            ds.send(dp);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+    private  class runUdpClient extends AsyncTask<DatagramPacket, Void, DatagramPacket>{
+
+        @Override
+        protected DatagramPacket doInBackground(DatagramPacket ...params){
+
+            DatagramSocket ds = null;
+            //SEND
+            try {
+                ds = new DatagramSocket();
+                DatagramPacket dp;
+                //dp = new DatagramPacket(udpMsg.getBytes(), udpMsg.length(), hostAddress, portnumber);
+                dp = params[0];
+                ds.send(dp);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            //RECEIVE
+            DatagramPacket incomingPacket = new DatagramPacket(new byte[100], 100);
+            try {
+                ds.setSoTimeout(1000);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            try {
+                ds.receive(incomingPacket);
+            } catch (IOException e){
+                e.printStackTrace();
+            }finally{
+                if(ds != null) ds.close();
+            }
+            System.out.println("Packet recieved from server" + Arrays.toString(incomingPacket.getData()));
+            return incomingPacket;
         }
-        DatagramPacket incomingPacket = new DatagramPacket(new byte[100], 100);
-        try {
-            ds.setSoTimeout(1000);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-        try {
-            ds.receive(incomingPacket);
-        } catch (IOException e){
-            e.printStackTrace();
-        }finally{
-            if(ds != null) ds.close();
-        }
-        return incomingPacket;
+
     }
 
 
@@ -197,9 +201,8 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected InetAddress doInBackground(String... params) {
             try {
-                if (params[0].equals("local")) {
-                    return InetAddress.getLocalHost();
-                } else return InetAddress.getByName(params[0]);
+
+                return InetAddress.getByName(params[0]);
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
