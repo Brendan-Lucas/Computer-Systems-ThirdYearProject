@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity
     //TODO: external ip address of the pi or internal if we doing it thru the local network
     private static final int portnumber = 1400;
     private static final String debugString = "debug";
-    public byte housenumber = 0x00;
+    public byte housenumber = 0x01;
     public byte doornumber = 0x01;
     public final byte UNLOCK = (byte) 0xFF;
     public final byte LOCK = 0x00;
@@ -74,11 +74,7 @@ public class MainActivity extends AppCompatActivity
             Log.i(debugString, "Connection established");
 
             //initialize text view with doorstatus
-            updateDoorStatus(requestDoorStatus());
-
-            //start thread that keeps updating door status
-            ControlThread doorStatusUpdater = new ControlThread(this);
-            doorStatusUpdater.start();
+            //updateDoorStatus(requestDoorStatus());
         }
         catch (IOException e)
         {
@@ -92,21 +88,8 @@ public class MainActivity extends AppCompatActivity
         btnLock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                byte[] sendMsg = new byte[100];
-                byte[] recMsg = new byte[100];
-                sendMsg[0] = housenumber;
-                sendMsg[1] = doornumber;
-                sendMsg[2] = LK_MSG;
 
-
-                receivePacket = new DatagramPacket(recMsg, recMsg.length);
-                sendPacket = new DatagramPacket(sendMsg, sendMsg.length, hostAddress, portnumber);
-
-                try {
-                    socket.send(sendPacket);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                DatagramPacket receivePacket = runUdpClient(LK_MSG);
 
                 try {
                     socket.receive(receivePacket);
@@ -119,7 +102,6 @@ public class MainActivity extends AppCompatActivity
                 int doorNum = doornumber;
                 eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
                 adapter.notifyDataSetChanged();
-
 
                 //    int doorNum = doornumber;
                 //   eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
@@ -170,72 +152,58 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private class ControlThread extends Thread {
-        private DatagramSocket sendReceive;
-        private MainActivity mainActivity;
-        public boolean statusObtainedByThread;
-        public ControlThread (MainActivity mainActivity)
-        {
-            this.mainActivity = mainActivity;
-            try {
-                this.sendReceive = new DatagramSocket();
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
+
+
+    private DatagramPacket runUdpClient(byte msg)  {
+        byte[] udpMsg = {(byte)housenumber, (byte)doornumber, msg, UNLOCK};
+        DatagramSocket ds = null;
+        try {
+            ds = new DatagramSocket();
+            InetAddress serverAddr = InetAddress.getByName("127.0.0.1");
+            DatagramPacket dp;
+            //dp = new DatagramPacket(udpMsg.getBytes(), udpMsg.length(), hostAddress, portnumber);
+            dp = new DatagramPacket(udpMsg, udpMsg.length, serverAddr, portnumber);
+            ds.send(dp);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        public void run() {
-            byte[] sendMsg = new byte[100];
-            byte[] recMsg = new byte[100];
-            sendMsg[0] = mainActivity.housenumber;
-            sendMsg[1] = mainActivity.doornumber;
-            sendMsg[2] = mainActivity.GET_DOR;
-
-            DatagramPacket sendPacket;
-            DatagramPacket receivePacket;
-            receivePacket = new DatagramPacket(recMsg, recMsg.length);
-            try {
-                while(true) {
-                    sendPacket = new DatagramPacket(sendMsg, sendMsg.length, hostAddress, portnumber);
-                    socket.send(sendPacket);
-                    socket.receive(receivePacket);
-                    //TODO: Add short delay to remove asynchronicity
-                    final byte[] receiveMsg = receivePacket.getData();
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            statusObtainedByThread = (receiveMsg[3] == UNLOCK);
-                            if (statusObtainedByThread != mainActivity.currentDoorState){
-                                mainActivity.currentDoorState = statusObtainedByThread;
-                                int doorNum = mainActivity.doornumber;
-                                mainActivity.eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((statusObtainedByThread) ? "unlocked." : "locked."));
-                                mainActivity.adapter.notifyDataSetChanged();
-                            }
-                            mainActivity.updateDoorStatus(statusObtainedByThread);
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        DatagramPacket incomingPacket = new DatagramPacket(new byte[100], 100);
+        try {
+            ds.setSoTimeout(1000);
+        } catch (SocketException e) {
+            e.printStackTrace();
         }
-    };
+        try {
+            ds.receive(incomingPacket);
+        } catch (IOException e){
+            e.printStackTrace();
+        }finally{
+            if(ds != null) ds.close();
+        }
+        return incomingPacket;
+    }
 
 
-    private class CreateAddress extends AsyncTask<String, Void, InetAddress>{
+    private class CreateAddress extends AsyncTask<String, Void, InetAddress> {
 
         private Exception e;
 
         @Override
         protected InetAddress doInBackground(String... params) {
-            try{
+            try {
                 if (params[0].equals("local")) {
                     return InetAddress.getLocalHost();
-                }else return InetAddress.getByName(params[0]);
-            } catch(UnknownHostException e) {
+                } else return InetAddress.getByName(params[0]);
+            } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
+            System.out.println("ANDROID: FUCKING UP BAD ");
             return null;
         }
     }
