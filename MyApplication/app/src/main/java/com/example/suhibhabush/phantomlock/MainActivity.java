@@ -16,6 +16,7 @@ import java.net.*;
 import java.security.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -25,6 +26,7 @@ import android.os.AsyncTask;
 public class MainActivity extends AppCompatActivity
 {
     //TODO: Add image request, add multiple doors
+    //private String hostName = "99.248.222.229";
     private String hostName = "10.0.2.2";
     private InetAddress hostAddress;
     //TODO: external ip address of the pi or internal if we doing it thru the local network
@@ -185,6 +187,7 @@ public class MainActivity extends AppCompatActivity
             }finally{
                 if(ds != null) ds.close();
             }
+            System.out.println("Packet recieved from server" + Arrays.toString(incomingPacket.getData()));
             return incomingPacket;
         }
 
