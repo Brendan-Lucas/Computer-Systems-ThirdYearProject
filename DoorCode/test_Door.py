@@ -122,26 +122,26 @@ def test_runVirtual(T_UNIT):
     return T_UNIT.UNRESOLVED
 
 #--------------------------------------------------------------------------------------------
+# NOTE:
+#
+#  There is no time left to implement the rest of these tests. However, all of these
+#  test cases can be proven through the use of the virtual door GUI. We do believe that this
+#  is an exhaustive list of Unit Tests and had we had the time to implement it all it would
+#  definitely prove that every component in the system works. But for now, the virtual door
+#  will fill that role.
+#   
+#--------------------------------------------------------------------------------------------
 def test_runHardware(T_UNIT):
-    try:
-        DOOR = Door(44,11,"Front")
-        DOOR_THR = threading.Thread(target=DOOR.runHardware, args=())
-        DOOR_THR.daemon = True
-        DOOR_THR.start()
-        time.sleep(1)
-        if DOOR.DOOR_IO != None: # and Door.DOOR_TYPE = "Front"
-            return T_UNIT.PASS
-        DOOR_THR.stop()
-    except:
-        return T_UNIT.FAIL
-    
+    return T_UNIT.UNRESOLVED
+
 #--------------------------------------------------------------------------------------------
 def test_run_FRONT(T_UNIT):
     return T_UNIT.UNRESOLVED
+
+#--------------------------------------------------------------------------------------------
 def test_run_BACK(T_UNIT):
     return T_UNIT.UNRESOLVED
 
-    
 #--------------------------------------------------------------------------------------------
 def test_pollMessage_NONE(T_UNIT):
     return T_UNIT.UNRESOLVED
