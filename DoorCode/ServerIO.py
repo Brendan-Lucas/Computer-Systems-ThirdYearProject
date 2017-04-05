@@ -16,7 +16,7 @@ import socket
 # Opcodes
 PASSWORD_OPCODE = 0x00
 PICTURE_OPCODE  = 0x01
-STATE_OPCODE    = 0x03
+STATE_OPCODE    = 0x02
 
 #============================================================================================
 # Constants
@@ -35,10 +35,10 @@ class ServerIO():
         self.HOME_ID = int(homeID)
         self.DOOR_ID = int(doorID)
         # Set Server Location
-        self.SERVER_ADDRESS = '127.0.0.1'#'10.0.0.31'
+        self.SERVER_ADDRESS = '10.0.0.31'#'127.0.0.1'#
         self.SERVER_PORT    = 1400
         # Set Receiving location
-        self.DOOR_ADDRESS   = '127.0.0.1'#'10.0.0.20'
+        self.DOOR_ADDRESS   = '10.0.0.20'#'127.0.0.1'#
         self.DOOR_PORT      = 1400+10*int(homeID)+int(doorID)
         # Initalize Socket
         self.SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

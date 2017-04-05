@@ -68,7 +68,7 @@ public class MakeDataBase{
 						
 			// Home 9
 			doors = new ArrayList<Door>();
-			doors.add(new Door(false, "10.0.0.20"));
+			doors.add(new Door(false, "10.0.0.32")); // Door being run on hardware
 			doors.add(new Door(false, "10.0.0.20"));
 			doors.add(new Door(false, "10.0.0.20"));
 			users = new ArrayList<User>();

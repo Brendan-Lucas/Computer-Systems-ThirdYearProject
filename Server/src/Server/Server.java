@@ -167,10 +167,10 @@ public class Server extends Thread{
       System.out.println("CONTROL: ServerPass: " + house.getPasscode() + ", PasswordReceived: " + new String(passcode));
 
       if(house.checkPasscode(new String(passcode))){
-      	System.out.println("CONTROL: unlock building");
+      	System.out.println("CONTROL: Accepted Response");
       	buildResponse(ACCEPT, msg, 4);
       } else{
-        System.out.println("CONTROL: lock building");
+        System.out.println("CONTROL: Rejected Response");
       	buildResponse(REJECT, msg, 4);
       }
       
