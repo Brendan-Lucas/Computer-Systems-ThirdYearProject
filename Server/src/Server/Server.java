@@ -147,8 +147,9 @@ public class Server extends Thread{
 	  		else if (msg[2] == GET_DOR){
 	  			respondWithDoorInfo(door, msg);
 	  			storeRequest(door, msg);
-	  		}else if (msg[2] == ANDROID_ADDRESS){
-	  			Server.androidAddress = packet.getAddress();
+	  		}
+	  		else if (msg[2] == ANDROID_ADDRESS){
+	  			storeUserAndroidAddress(houses.getHouses().get(houseNum), msg);
   			}
 	  		
 	  		try {
@@ -160,7 +161,8 @@ public class Server extends Thread{
     
   	}
 
-    private void keypadRequest(byte[] msg, House house){
+
+		private void keypadRequest(byte[] msg, House house){
       System.out.println("CONTROL: keypadRequest determined:  "+ Arrays.toString(msg));
     	byte[] passcode = new byte[4];
       for(int i=3, j=0; j<passcode.length; i++, j++){
@@ -327,6 +329,19 @@ public class Server extends Thread{
 				e.printStackTrace();
 			}
     }
+    
+    private void storeUserAndroidAddress(House house, byte[] msg) {
+    	byte[] usernameBytes = new byte[10];
+    	for (int i=0, j = 3; msg[j]!=0 && i<usernameBytes.length && j<msg.length; i++, j++){
+    		usernameBytes[i] = msg[j];
+    	}
+    	if(house.getUsers().contains(new String(usernameBytes))){
+    		int userIndex = house.getUsers().indexOf(new String(usernameBytes));
+    		house.getUsers().get(userIndex).setAddress(packet.getAddress());
+    	}
+    	//TODO: could implement add users here
+			
+		}
     //TODO: implement door port differences
     private void buildResponse(byte key, byte[] msg, int length){
     	buildResponse(key, msg, length, this.packet.getAddress(), this.packet.getPort());

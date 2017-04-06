@@ -63,6 +63,16 @@ public class User {
 		}
 		return false;
 	}
+	
+	@Override
+	public boolean equals(final Object user){
+		if( user instanceof String){
+			return this.username.equals( (String) username);
+		}else if (user instanceof User){
+			return this.username.equals(((User) user).getUsername());
+		}
+		return false;	
+	}
 
 
 }
