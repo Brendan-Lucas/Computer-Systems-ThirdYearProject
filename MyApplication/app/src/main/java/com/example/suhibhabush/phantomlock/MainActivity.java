@@ -125,7 +125,11 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    //public
+    public void updateLockState(byte[] msg){
+       currentDoorState = (msg[3]==UNLOCK);
+        updateDoorStatus(currentDoorState);
+
+    }
 
     private boolean requestDoorStatus() {
         byte[] sendMsg = new byte[100];
