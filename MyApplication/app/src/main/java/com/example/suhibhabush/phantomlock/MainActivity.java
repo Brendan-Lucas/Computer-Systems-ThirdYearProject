@@ -1,5 +1,6 @@
 package com.example.suhibhabush.phantomlock;
 
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,8 +24,8 @@ import java.util.concurrent.ExecutionException;
 
 import android.os.AsyncTask;
 
-public class MainActivity extends AppCompatActivity
-{
+
+public class MainActivity extends AppCompatActivity {
     //TODO: Add image request, add multiple doors
     //private String hostName = "99.248.222.229";
     private String hostName = "10.0.2.2";
@@ -49,14 +50,16 @@ public class MainActivity extends AppCompatActivity
     public ArrayAdapter<String> adapter;
     private DatagramPacket sendPacket, receivePacket;
     private runUdpClient sendReceiveTask;
+    public String username = "suhaib";
+    public Receive receiveTask;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
 
         CreateAddress addressGetter = new CreateAddress();
         try {
             hostAddress = addressGetter.execute(hostName).get();
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         System.out.println("Finished previous hickup");
@@ -71,42 +74,63 @@ public class MainActivity extends AppCompatActivity
         listView.setAdapter(adapter);
 
 
-
         //Connecting
         eventArrayList.add(0, (getCurrentTimeStamp() + "App Launched."));
         //initialize text view with doorstatus
         //updateDoorStatus(requestDoorStatus());
 
+        sendReceiveTask = new runUdpClient();
 
 
+        byte[] udpMsg1 = {(byte) housenumber, (byte) doornumber, (byte) 0xFF};
+        byte[] udpMsg2 = username.getBytes();
+        byte[] udpMessage = new byte[udpMsg1.length + udpMsg2.length];
+        System.arraycopy(udpMsg1, 0, udpMessage, 0, udpMsg1.length);
+        System.arraycopy(udpMsg2, 0, udpMessage, udpMsg1.length, udpMsg2.length);
+        System.out.println(hostAddress);
+        sendPacket = new DatagramPacket(udpMessage, udpMessage.length, hostAddress, portnumber);
+
+        try {
+            sendReceiveTask.execute(sendPacket).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
         Button btnLock = (Button) findViewById(R.id.btnLock);
         btnLock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendReceiveTask = new runUdpClient();
-                byte[] udpMsg = {(byte)housenumber, (byte)doornumber, LK_MSG, UNLOCK};
+                runUdpClient sendReceive = new runUdpClient();
+                byte lockOrUnlock = currentDoorState? (byte)0xFF : 0x00;
+                byte[] udpMsg = {(byte) housenumber, (byte) doornumber, LK_MSG, lockOrUnlock};
                 System.out.println(hostAddress);
                 sendPacket = new DatagramPacket(udpMsg, udpMsg.length, hostAddress, portnumber);
-                DatagramPacket receivePacket = null;
-                try {
-                    receivePacket = sendReceiveTask.execute(sendPacket).get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
+                sendReceive.execute(sendPacket);
 
 
-                currentDoorState = (receivePacket.getData()[3]==UNLOCK);
-                updateDoorStatus(currentDoorState);
-                int doorNum = doornumber;
-                eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum)))+ ((currentDoorState) ? "unlocked." : "locked."));
-                adapter.notifyDataSetChanged();
+
+                //currentDoorState = (receivePacket.getData()[3] == UNLOCK);
+                //
+
 
             }
         });
+        receiveTask = new Receive();
+        receiveTask.start();
 
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+    }
+
+    public void updateLockState(byte[] msg){
+        currentDoorState = (msg[3]==UNLOCK);
+        updateDoorStatus(currentDoorState);
+        int doorNum = doornumber;
+        eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum))) + ((currentDoorState) ? "unlocked." : "locked."));
+        adapter.notifyDataSetChanged();
 
     }
 
@@ -130,13 +154,13 @@ public class MainActivity extends AppCompatActivity
         }
 
         byte[] receiveMsg = receivePacket.getData();
-        return(receiveMsg[3]==UNLOCK);
+        return (receiveMsg[3] == UNLOCK);
     }
 
-    private void updateDoorStatus(boolean isUnlocked){
-        if(isUnlocked){
+    private void updateDoorStatus(boolean isUnlocked) {
+        if (isUnlocked) {
             tvDoorStatus.setText("Unlocked");
-        }else{
+        } else {
             tvDoorStatus.setText("Locked");
         }
     }
@@ -145,16 +169,15 @@ public class MainActivity extends AppCompatActivity
         SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//dd/MM/yyyy
         Date now = new Date();
         String strDate = sdfDate.format(now);
-        return ("["+strDate+"] ");
+        return ("[" + strDate + "] ");
     }
 
 
 
-
-    private  class runUdpClient extends AsyncTask<DatagramPacket, Void, DatagramPacket>{
+    private class runUdpClient extends AsyncTask<DatagramPacket, Void, Void> {
 
         @Override
-        protected DatagramPacket doInBackground(DatagramPacket ...params){
+        protected Void doInBackground(DatagramPacket... params) {
 
             DatagramSocket ds = null;
             //SEND
@@ -166,33 +189,74 @@ public class MainActivity extends AppCompatActivity
                 ds.send(dp);
             } catch (SocketException e) {
                 e.printStackTrace();
-            }catch (UnknownHostException e) {
+            } catch (UnknownHostException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            //RECEIVE
-            DatagramPacket incomingPacket = new DatagramPacket(new byte[100], 100);
-            try {
-                ds.setSoTimeout(1000);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
-            try {
-                ds.receive(incomingPacket);
-            } catch (IOException e){
-                e.printStackTrace();
-            }finally{
-                if(ds != null) ds.close();
-            }
-            System.out.println("Packet recieved from server" + Arrays.toString(incomingPacket.getData()));
-            return incomingPacket;
+
+            return null;
         }
 
     }
 
+
+    private class Receive extends Thread {
+
+        public Receive(){
+
+        }
+        @Override
+        public void run() {
+            DatagramSocket receiveSocket = null;
+            DatagramPacket receivePacket = null;
+            try {
+                receiveSocket = new DatagramSocket(portnumber);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            while (true){
+
+                receivePacket = new DatagramPacket(new byte[100], 100);
+
+                try {
+                    receiveSocket.receive(receivePacket);
+                } catch (IOException e){
+                    e.printStackTrace();
+                };
+
+
+                addThread(receivePacket);
+            }
+
+        }
+
+        private void addThread(DatagramPacket packet){
+            new ControlThread(packet).run();
+        }
+
+        private class ControlThread extends Thread{
+            private DatagramPacket packet;
+
+            public ControlThread(DatagramPacket packet){
+                this.packet=packet;
+            }
+
+            @Override
+            public void run(){
+
+              if(packet.getData()[2]==D_STAT_MSG){
+                updateLockState(packet.getData());
+              }
+
+
+            }
+
+        }
+        
+    }
 
     private class CreateAddress extends AsyncTask<String, Void, InetAddress> {
 
