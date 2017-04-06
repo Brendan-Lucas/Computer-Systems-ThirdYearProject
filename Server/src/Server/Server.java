@@ -357,7 +357,7 @@ public class Server extends Thread{
      */
     private void storeUserAndroidAddress(House house, byte[] msg) {
     	byte[] usernameBytes = new byte[10];
-    	for (int i=0, j = 3; msg[j]!=0 && i<usernameBytes.length && j<msg.length; i++, j++){
+    	for (int i=0, j = 3; i<usernameBytes.length && j<msg.length && msg[j]!=0; i++, j++){
     		usernameBytes[i] = msg[j];
     	}
     	if(house.getUsers().contains(new String(usernameBytes))){
