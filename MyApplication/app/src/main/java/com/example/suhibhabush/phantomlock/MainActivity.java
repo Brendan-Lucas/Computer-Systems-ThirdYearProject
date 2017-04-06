@@ -137,7 +137,11 @@ public class MainActivity extends AppCompatActivity {
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    //public
+    public void updateLockState(byte[] msg){
+       currentDoorState = (msg[3]==UNLOCK);
+        updateDoorStatus(currentDoorState);
+
+    }
 
     private boolean requestDoorStatus() {
         byte[] sendMsg = new byte[100];
@@ -294,10 +298,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(DatagramPacket... params){
 
+              if(params[0].getData()[2]==D_STAT_MSG){
+                updateLockState(params[0].getData());
+              }
+              return java.lang.Void;
+            }
 
-                
-            };
         }
+        
     }
 
     private class CreateAddress extends AsyncTask<String, Void, InetAddress> {
