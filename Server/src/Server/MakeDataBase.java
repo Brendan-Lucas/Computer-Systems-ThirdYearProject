@@ -29,6 +29,8 @@ public class MakeDataBase{
 			ArrayList<Door> doors = new ArrayList<Door>();
 			ArrayList<User> users= new ArrayList<User>();
 			users.add(new User("JJohnson", "Phantom1"));
+			users.add(new User("blucas", "Phantom1"));
+			users.add(new User("suhaib", "Phantom1"));
 			House house = new House(doors, users, "1326");
 			
 			// Home 1
