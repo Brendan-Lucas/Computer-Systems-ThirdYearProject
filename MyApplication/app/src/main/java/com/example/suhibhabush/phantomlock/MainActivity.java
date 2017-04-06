@@ -80,8 +80,8 @@ public class MainActivity extends AppCompatActivity {
         //updateDoorStatus(requestDoorStatus());
 
         sendReceiveTask = new runUdpClient();
-        receiveTask = new Receive();
-        //receiveTask.execute();
+
+
         byte[] udpMsg1 = {(byte) housenumber, (byte) doornumber, (byte) 0xFF};
         byte[] udpMsg2 = username.getBytes();
         byte[] udpMessage = new byte[udpMsg1.length + udpMsg2.length];
@@ -89,9 +89,9 @@ public class MainActivity extends AppCompatActivity {
         System.arraycopy(udpMsg2, 0, udpMessage, udpMsg1.length, udpMsg2.length);
         System.out.println(hostAddress);
         sendPacket = new DatagramPacket(udpMessage, udpMessage.length, hostAddress, portnumber);
-        DatagramPacket receivePacket = null;
+
         try {
-            receivePacket = sendReceiveTask.execute(sendPacket).get();
+            sendReceiveTask.execute(sendPacket).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 byte[] udpMsg = {(byte) housenumber, (byte) doornumber, LK_MSG, UNLOCK};
                 System.out.println(hostAddress);
                 sendPacket = new DatagramPacket(udpMsg, udpMsg.length, hostAddress, portnumber);
-                DatagramPacket receivePacket = null;
+                sendReceive.execute(sendPacket);
 
 
 
@@ -116,6 +116,8 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        receiveTask = new Receive();
+        receiveTask.start();
 
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -171,10 +173,10 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private class runUdpClient extends AsyncTask<DatagramPacket, Void, DatagramPacket> {
+    private class runUdpClient extends AsyncTask<DatagramPacket, Void, Void> {
 
         @Override
-        protected DatagramPacket doInBackground(DatagramPacket... params) {
+        protected Void doInBackground(DatagramPacket... params) {
 
             DatagramSocket ds = null;
             //SEND
@@ -193,31 +195,20 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            //RECEIVE
-            DatagramPacket incomingPacket = new DatagramPacket(new byte[100], 100);
-            try {
-                ds.setSoTimeout(1000);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
-            try {
-                ds.receive(incomingPacket);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (ds != null) ds.close();
-            }
-            System.out.println("Packet recieved from server" + Arrays.toString(incomingPacket.getData()));
-            return incomingPacket;
+
+            return null;
         }
 
     }
 
 
-    private class Receive extends AsyncTask<Void, Void, Void> {
+    private class Receive extends Thread {
 
+        public Receive(){
+
+        }
         @Override
-        protected Void doInBackground(Void... params) {
+        public void run() {
             DatagramSocket receiveSocket = null;
             DatagramPacket receivePacket = null;
             try {
@@ -242,20 +233,24 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void addThread(DatagramPacket packet){
-            new ControlThread().execute(packet);
+            new ControlThread(packet).run();
         }
 
-        private class ControlThread extends AsyncTask<DatagramPacket, Void, Void>{
+        private class ControlThread extends Thread{
+            private DatagramPacket packet;
 
+            public ControlThread(DatagramPacket packet){
+                this.packet=packet;
+            }
 
             @Override
-            protected Void doInBackground(DatagramPacket... params){
+            public void run(){
 
-              if(params[0].getData()[2]==D_STAT_MSG){
-                updateLockState(params[0].getData());
+              if(packet.getData()[2]==D_STAT_MSG){
+                updateLockState(packet.getData());
               }
 
-                return null;
+
             }
 
         }
