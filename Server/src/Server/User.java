@@ -13,7 +13,12 @@ public class User {
 	}
 
 	public User(String username, String password){
-		this(username, password, "localHost");
+		this.username = username;
+		this.password = password;
+		try {
+			this.address = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+		}
 		
 	}
 
