@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity
     public ArrayAdapter<String> adapter;
     private DatagramPacket sendPacket, receivePacket;
     private runUdpClient sendReceiveTask;
+    public String username = "suhaib";
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -77,20 +78,34 @@ public class MainActivity extends AppCompatActivity
         //initialize text view with doorstatus
         //updateDoorStatus(requestDoorStatus());
 
-
-
+        sendReceiveTask = new runUdpClient();
+        byte[] udpMsg1 = {(byte)housenumber, (byte)doornumber, (byte) 0xFF};
+        byte[] udpMsg2  = username.getBytes();
+        byte[] udpMessage = new byte[udpMsg1.length + udpMsg2.length];
+        System.arraycopy(udpMsg1, 0, udpMessage, 0, udpMsg1.length);
+        System.arraycopy(udpMsg2, 0, udpMessage, udpMsg1.length, udpMsg2.length);
+        System.out.println(hostAddress);
+        sendPacket = new DatagramPacket(udpMessage, udpMessage.length, hostAddress, portnumber);
+        DatagramPacket receivePacket = null;
+        try {
+            receivePacket = sendReceiveTask.execute(sendPacket).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
         Button btnLock = (Button) findViewById(R.id.btnLock);
         btnLock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendReceiveTask = new runUdpClient();
+                runUdpClient sendReceive = new runUdpClient();
                 byte[] udpMsg = {(byte)housenumber, (byte)doornumber, LK_MSG, UNLOCK};
                 System.out.println(hostAddress);
                 sendPacket = new DatagramPacket(udpMsg, udpMsg.length, hostAddress, portnumber);
                 DatagramPacket receivePacket = null;
                 try {
-                    receivePacket = sendReceiveTask.execute(sendPacket).get();
+                    receivePacket = sendReceive.execute(sendPacket).get();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (ExecutionException e) {
@@ -109,6 +124,8 @@ public class MainActivity extends AppCompatActivity
 
 
     }
+
+    //public
 
     private boolean requestDoorStatus() {
         byte[] sendMsg = new byte[100];
