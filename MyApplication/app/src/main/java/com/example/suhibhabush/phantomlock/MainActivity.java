@@ -104,13 +104,7 @@ public class MainActivity extends AppCompatActivity
                 System.out.println(hostAddress);
                 sendPacket = new DatagramPacket(udpMsg, udpMsg.length, hostAddress, portnumber);
                 DatagramPacket receivePacket = null;
-                try {
-                    receivePacket = sendReceive.execute(sendPacket).get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
+
 
 
                 currentDoorState = (receivePacket.getData()[3]==UNLOCK);
