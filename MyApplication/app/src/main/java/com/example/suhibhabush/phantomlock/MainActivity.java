@@ -103,7 +103,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 runUdpClient sendReceive = new runUdpClient();
-                byte[] udpMsg = {(byte) housenumber, (byte) doornumber, LK_MSG, UNLOCK};
+                byte lockOrUnlock = currentDoorState? (byte)0xFF : 0x00;
+                byte[] udpMsg = {(byte) housenumber, (byte) doornumber, LK_MSG, lockOrUnlock};
                 System.out.println(hostAddress);
                 sendPacket = new DatagramPacket(udpMsg, udpMsg.length, hostAddress, portnumber);
                 sendReceive.execute(sendPacket);
