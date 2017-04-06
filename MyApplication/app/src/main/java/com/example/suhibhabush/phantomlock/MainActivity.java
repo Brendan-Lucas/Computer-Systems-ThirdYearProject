@@ -24,10 +24,6 @@ import java.util.concurrent.ExecutionException;
 
 import android.os.AsyncTask;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 public class MainActivity extends AppCompatActivity {
     //TODO: Add image request, add multiple doors
@@ -55,11 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private DatagramPacket sendPacket, receivePacket;
     private runUdpClient sendReceiveTask;
     public String username = "suhaib";
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
+    public Receive receiveTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
         //updateDoorStatus(requestDoorStatus());
 
         sendReceiveTask = new runUdpClient();
+        receiveTask = new Receive();
+        //receiveTask.execute();
         byte[] udpMsg1 = {(byte) housenumber, (byte) doornumber, (byte) 0xFF};
         byte[] udpMsg2 = username.getBytes();
         byte[] udpMessage = new byte[udpMsg1.length + udpMsg2.length];
@@ -116,11 +110,9 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-                currentDoorState = (receivePacket.getData()[3] == UNLOCK);
-                updateDoorStatus(currentDoorState);
-                int doorNum = doornumber;
-                eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum))) + ((currentDoorState) ? "unlocked." : "locked."));
-                adapter.notifyDataSetChanged();
+                //currentDoorState = (receivePacket.getData()[3] == UNLOCK);
+                //
+
 
             }
         });
@@ -128,12 +120,14 @@ public class MainActivity extends AppCompatActivity {
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     public void updateLockState(byte[] msg){
-       currentDoorState = (msg[3]==UNLOCK);
+        currentDoorState = (msg[3]==UNLOCK);
         updateDoorStatus(currentDoorState);
+        int doorNum = doornumber;
+        eventArrayList.add(0, (getCurrentTimeStamp() + eventString.replace("doornum", Integer.toString(doorNum))) + ((currentDoorState) ? "unlocked." : "locked."));
+        adapter.notifyDataSetChanged();
 
     }
 
@@ -175,41 +169,6 @@ public class MainActivity extends AppCompatActivity {
         return ("[" + strDate + "] ");
     }
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
-        client.disconnect();
-    }
 
 
     private class runUdpClient extends AsyncTask<DatagramPacket, Void, DatagramPacket> {
@@ -295,7 +254,8 @@ public class MainActivity extends AppCompatActivity {
               if(params[0].getData()[2]==D_STAT_MSG){
                 updateLockState(params[0].getData());
               }
-              return java.lang.Void;
+
+                return null;
             }
 
         }
