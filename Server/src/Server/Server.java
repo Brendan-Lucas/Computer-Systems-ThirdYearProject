@@ -29,6 +29,7 @@ public class Server extends Thread{
   public static boolean verbose;
   private static final int PORT_NUMBER = 1400;
   protected static Vector file = new Vector();
+  protected static InetAddress androidAddress;
   /*
   * Creates new server Thread initalizes reveive socket and active requests
   */
@@ -73,13 +74,15 @@ public class Server extends Thread{
     private DatagramPacket packet;
     private DatagramSocket sendReceiveSocket;
     final byte ACK = 0x04;
-    final byte ACCEPT = (byte)0x00;
-    final byte REJECT = (byte)0xFF;
-    final byte PASS_MSG = 0;
-    final byte IMG_MSG = 1;
-    final byte D_STAT_MSG = 2;
-    final byte LK_MSG = 3;
-    final byte GET_DOR = (byte) 0xFF;
+    final byte ACCEPT = (byte) 0x00;
+    final byte REJECT = (byte) 0xFF;
+    final byte PASS_MSG = (byte) 0x00;
+    final byte IMG_MSG = (byte) 0x01;
+    final byte D_STAT_MSG = (byte) 0x02;
+    final byte LK_MSG = (byte) 0x03;
+    final byte GET_DOR = (byte) 0x04;
+    final byte ANDROID_ADDRESS = (byte) 0xFF;
+    final int WKP = 1400; // WELL KNOWN PORT
     final int minPacketLength = 4;
     int houseNum;
     int doorNum;
@@ -108,7 +111,7 @@ public class Server extends Thread{
 					e.printStackTrace();
 				}
   		
-
+	  		
 	  		//Check Valid House Number
 	  		if(houses.getHouses().get(houseNum) == null){
 	  			if(Server.verbose) System.out.println("CONTROL: INACTIVE HOUSE NUMBER, IGNORING REQUEST");
@@ -123,29 +126,30 @@ public class Server extends Thread{
 	      if(Server.verbose) System.out.println("CONTROL: DOOR NUMBER CHECKED AND IS VALID");
 	
 	  		if(Server.verbose) System.out.println("CONTROL: Control thread running, scanning packet"+ Arrays.toString(msg));
-	
+	  		Door door = houses.getHouses().get(houseNum).getDoors().get(doorNum);
 	  		if (msg[2] == PASS_MSG) {
 	  			if(Server.verbose) System.out.println("CONTROL: passmsg detected" + Arrays.toString(msg));
-	
 	  			keypadRequest(msg, houses.getHouses().get(houseNum));
-	  			storeRequest(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
-	  		}else if (msg[2] == IMG_MSG) {
-	
+	  			storeRequest(door, msg);
+	  		}
+	  		else if (msg[2] == IMG_MSG) {
 	  			imageRequest(msg);
-	  			storeRequest(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
-	  		}else if (msg[2] == D_STAT_MSG){
-	
-	  			doorStateMessage(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
-	  			storeRequest(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
-	  		}else if (msg[2] == LK_MSG){
-	  			Door door = houses.getHouses().get(houseNum).getDoors().get(doorNum);
+	  			storeRequest(door, msg);
+	  		}
+	  		else if (msg[2] == D_STAT_MSG){
+	  			doorStateMessage(door, houses.getHouses().get(houseNum), msg);
+	  			storeRequest(door, msg);
+	  		}
+	  		else if (msg[2] == LK_MSG){
 	  			lockDoorMessage(door, msg);
 	  			storeRequest(door, msg);
-	  		}else if (msg[2] == GET_DOR){
-	
-	  			respondWithDoorInfo(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
-	  			storeRequest(houses.getHouses().get(houseNum).getDoors().get(doorNum), msg);
 	  		}
+	  		else if (msg[2] == GET_DOR){
+	  			respondWithDoorInfo(door, msg);
+	  			storeRequest(door, msg);
+	  		}else if (msg[2] == ANDROID_ADDRESS){
+	  			Server.androidAddress = packet.getAddress();
+  			}
 	  		
 	  		try {
 					objectMapper.writeValue(new File("database.json"), houses);
@@ -275,8 +279,7 @@ public class Server extends Thread{
 
 
     
-
-    private void doorStateMessage(Door door, byte[] msg){
+    private void doorStateMessage(Door door, House house, byte[] msg){
       if(msg[3] == 0xFF) {
         System.out.println("CONTROL: Door Locked");
         door.setState(true);
@@ -284,11 +287,20 @@ public class Server extends Thread{
         System.out.println("CONTROL: Door Unlocked");
         door.setState(false);
       }
+      //update android application with state of the door
+      for( User user : house.getUsers()){
+      	buildResponse(msg[3], msg, minPacketLength, user.getAddress(), WKP); 
+      	try {
+					sendReceiveSocket.send(responsePacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+      }
     }
 
     private void lockDoorMessage(Door door, byte[] msg){
     	
-    		buildResponse(msg[3], msg, minPacketLength, door.getAddress());
+    		buildResponse(msg[3], msg, minPacketLength, door.getAddress(), WKP);
     		
     		try {
 					sendReceiveSocket.send(responsePacket);
@@ -317,17 +329,17 @@ public class Server extends Thread{
     }
     //TODO: implement door port differences
     private void buildResponse(byte key, byte[] msg, int length){
-    	buildResponse(key, msg, length, this.packet.getAddress());
+    	buildResponse(key, msg, length, this.packet.getAddress(), this.packet.getPort());
     }
     
-    private void buildResponse(byte key, byte[] msg, int length, InetAddress address){
+    private void buildResponse(byte key, byte[] msg, int length, InetAddress address, int port){
     	byte[] responseMsg = new byte[length];
       responseMsg[0] = msg[0];
       responseMsg[1] = msg[1];
       responseMsg[2] = msg[2];
       responseMsg[3] = key;
       //TODO: implement door diffs here;;;;
-      responsePacket = new DatagramPacket(responseMsg, responseMsg.length, address, this.packet.getPort());
+      responsePacket = new DatagramPacket(responseMsg, responseMsg.length, address, port);
     }
     
     public void displayImage(BufferedImage img){
