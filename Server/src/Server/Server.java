@@ -70,22 +70,23 @@ public class Server extends Thread{
 
 
   private class ControlThread extends Thread {
-    private DatagramPacket responsePacket;
-    private DatagramPacket packet;
-    private DatagramSocket sendReceiveSocket;
-    final byte ACK = 0x04;
-    final byte ACCEPT = (byte) 0x00;
-    final byte REJECT = (byte) 0xFF;
-    final byte PASS_MSG = (byte) 0x00;
-    final byte IMG_MSG = (byte) 0x01;
-    final byte D_STAT_MSG = (byte) 0x02;
-    final byte LK_MSG = (byte) 0x03;
-    final byte GET_DOR = (byte) 0x04;
-    final byte ANDROID_ADDRESS = (byte) 0xFF;
-    final int WKP = 1400; // WELL KNOWN PORT
-    final int minPacketLength = 4;
-    int houseNum;
-    int doorNum;
+		private DatagramPacket responsePacket;
+		private DatagramPacket packet;
+		private DatagramSocket sendReceiveSocket;
+		final byte ACK = 0x04;
+		final byte ACCEPT = (byte) 0x00;
+		final byte REJECT = (byte) 0xFF;
+		final byte PASS_MSG = (byte) 0x00;
+		final byte IMG_MSG = (byte) 0x01;
+		final byte D_STAT_MSG = (byte) 0x02;
+		final byte LK_MSG = (byte) 0x03;
+		final byte GET_DOR = (byte) 0x04;
+		final byte ANDROID_ADDRESS = (byte) 0xFF;
+		final int WKP = 1400; // WELL KNOWN PORT
+		final int minPacketLength = 4;
+		int houseNum;
+		int doorNum;
+    
     public ControlThread(DatagramPacket packet){
     	this.packet=packet;
   		try {
@@ -98,6 +99,7 @@ public class Server extends Thread{
   		System.out.println("CONTROL: new control thread");
     }
 
+    
   	public void run() {
 
   		byte[] msg = packet.getData();
@@ -157,11 +159,15 @@ public class Server extends Thread{
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-  		}//end Synchronized
+  		}//EndSynchronized
     
-  	}
+  	}//EndRun
 
-
+  	/*
+  	 * Receives passcode entry from door and checks it agianst stored passcode for the house
+  	 * Resends a packet to exactly where it came from port and address containing a byte 
+  	 * indicating weather the passcode received was correct 
+  	 */
 		private void keypadRequest(byte[] msg, House house){
       System.out.println("CONTROL: keypadRequest determined:  "+ Arrays.toString(msg));
     	byte[] passcode = new byte[4];
@@ -188,7 +194,9 @@ public class Server extends Thread{
       }
     }
 
-
+		/*
+		 * sends from door to Server, then transfers that image to the android application. 
+		 */
 		private void imageRequest(byte[] msg){
     	byte[] receiveBuff = new byte[Helpers.packetLength];
       byte[] data = new byte[Helpers.packetLength-Helpers.opcodeLength];
@@ -280,7 +288,10 @@ public class Server extends Thread{
     }
 
 
-    
+    /*
+     * Receives Door state info from door at any point that door changes
+     * Sends change to android users to tell the Application of the current state of the door
+     */
     private void doorStateMessage(Door door, House house, byte[] msg){
       if(msg[3] == 0xFF) {
         System.out.println("CONTROL: Door Locked");
@@ -300,6 +311,11 @@ public class Server extends Thread{
       }
     }
 
+    /*
+     * Method accepts params Door and byte[] message, Door info comes from HouseNum->DoorNum from packet 
+     * message bytes are bytes received in original UDP message to server
+     * this method is expected to be called by android or web clients to send a message to the doors telling them to lock or unlock themselves. 
+     */
     private void lockDoorMessage(Door door, byte[] msg){
     	
     		buildResponse(msg[3], msg, minPacketLength, door.getAddress(), WKP);
@@ -318,10 +334,16 @@ public class Server extends Thread{
     		}
     
     }
-
+    /*
+     * Method accepts params Door and Byte message, These come from the packet that was sent to the server,
+     * the door is representative of the door indicated by House number -> Door number.
+     * This method is expected to be called by external clients such as android or desktop applications. 
+     * Sends the information back to where it came from both address and port
+     */
     private void respondWithDoorInfo(Door door, byte[] msg){
       System.out.println("CONTROL: Door Info sending ");
       byte doorState = door.getState()? (byte)0x00: (byte)0xFF;
+      //sends to place where we got the packet with the weather the door is locked(0xFF) or unlocked(0x00)
       buildResponse(doorState, msg, 4);
     	try {
 				sendReceiveSocket.send(responsePacket);
@@ -329,7 +351,10 @@ public class Server extends Thread{
 				e.printStackTrace();
 			}
     }
-    
+    /*
+     * this method is intended to store the address of the android client based on username
+     * so that it can be used for future sending of door state updates. 
+     */
     private void storeUserAndroidAddress(House house, byte[] msg) {
     	byte[] usernameBytes = new byte[10];
     	for (int i=0, j = 3; msg[j]!=0 && i<usernameBytes.length && j<msg.length; i++, j++){
