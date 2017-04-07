@@ -93,7 +93,7 @@ class VirtualDoorIO():
         return self.DOOR_BUFFER;
 
     #===============================================================
-    # getKeyPressed()
+    # isKeyPressed()
     #---------------------------------------------------------------
     # Check if key on keypad is pressed
     # return: char(key pressed), False(key not pressed)
@@ -223,7 +223,16 @@ class HardwareDoorIO():
         # Check if operation was successful
         if self.isLocked() is False: return True
         return False
-
+    
+    #===============================================================
+    # isKeyPressed()
+    #---------------------------------------------------------------
+    # Check if key on keypad is pressed
+    # return: char(key pressed), False(key not pressed)
+    #---------------------------------------------------------------
+    def isKeyPressed(self):
+        return
+    
     #===============================================================
     # isLocked()
     #---------------------------------------------------------------
