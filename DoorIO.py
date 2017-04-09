@@ -20,7 +20,7 @@ class HardwareDoorIO():
         if self.isLocked() is False:
             if(self.HW == "GertBoard"):
                 pin_number=7
-                time_Complete = 1000 # to be changed
+                time_Complete = 10 # to be changed
                 
                 GPIO.setmode(GPIO.BOARD)
                 GPIO.setup(pin_number, GPIO.OUT)
@@ -46,7 +46,7 @@ class HardwareDoorIO():
         if self.isLocked() is True:
              if(self.HW == "GertBoard"):
                 pin_number=7
-                time_Complete = 1000 # to be changed
+                time_Complete = 10 # to be changed
                 
                 GPIO.setmode(GPIO.BOARD)
                 GPIO.setup(pin_number, GPIO.OUT)
