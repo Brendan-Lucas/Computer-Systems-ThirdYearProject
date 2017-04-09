@@ -19,28 +19,17 @@ class HardwareDoorIO():
         # Only run if actual state is different than passed state
         if self.isLocked() is False:
             if(self.HW == "GertBoard"):
-                GPIO.setmode(GPIO.BOARD)
                 pin_number=7
+                time_Complete = 1000 # to be changed
+                
+                GPIO.setmode(GPIO.BOARD)
                 GPIO.setup(pin_number, GPIO.OUT)
-                frequency_hertz= 50
-                pwm= GPIO.PWM(pin_number, frequency_hertz)
 
-                right_position=2.5
-                middle_position = 5
-
-                positionList= [middle_position, right_position, middle_position]
-                ms_per_cycle= 700/frequency_hertz
-
-                for position in positionList:
-                    duty_cycle_percentage = position * 100 /ms_per_cycle
-                    pwm.start(duty_cycle_percentage)
-                    time.sleep(0.5)
-
-                pwm.stop()
+                GPIO.output(pin_number, 1)
+                time.sleep(time_Complete)
+                GPIO.output(pin_number, 0)
                 GPIO.cleanup()
 
-            
-                
         # Check if operation was successful
         if self.isLocked() is True:
             return True
@@ -56,26 +45,16 @@ class HardwareDoorIO():
         # Only run if actual state is different than passed state
         if self.isLocked() is True:
              if(self.HW == "GertBoard"):
-                GPIO.setmode(GPIO.BOARD)
                 pin_number=7
+                time_Complete = 1000 # to be changed
+                
+                GPIO.setmode(GPIO.BOARD)
                 GPIO.setup(pin_number, GPIO.OUT)
-                frequency_hertz= 50
-                pwm= GPIO.PWM(pin_number, frequency_hertz)
 
-                right_position=2.5
-                middle_poristion = 7.5
-
-                positionList= [middle_poristion, right_position]
-                ms_per_cycle= 700/frequency_hertz
-
-                for position in positionList:
-                    duty_cycle_percentage = position * 100 /ms_per_cycle
-                    pwm.start(duty_cycle_percentage)
-                    time.sleep(0.5)
-
-                pwm.stop()
+                GPIO.output(pin_number, 1)
+                time.sleep(time_Complete)
+                GPIO.output(pin_number, 0)
                 GPIO.cleanup()
-            
                 
         # Check if operation was successful
         if self.isLocked() is False: return True
